@@ -25,15 +25,67 @@ varying vec3 vert;
 
 uniform sampler2D gradient: hint_black;
 
-vec4 triplanar_texture(vec3 position, vec3 normal, vec2 offset, sampler2D noise) {
-	vec4 colX = texture(noise, position.xy * scale + offset);
-	vec4 colY = texture(noise, position.xz * scale + offset);
-	vec4 colZ = texture(noise, position.zy * scale + offset);
-	
-	vec3 blendWeight = abs(normal);
-	blendWeight = vec3(pow(blendWeight.x, blendSharpness), pow(blendWeight.y, blendSharpness), pow(blendWeight.z, blendSharpness));
-	blendWeight /= (blendWeight.x + blendWeight.y + blendWeight.z);
-	
+vec3 blend_rnm(vec3 n1, vec3 n2)
+{
+	n1.z += 1.0;
+	n2.xy = -n2.xy;
+
+	return n1 * dot(n1, n2) / n1.z - n2;
+}
+
+vec3 triplanarNormal(vec3 vertPos, vec3 normal, vec3 nscale, vec2 offset, sampler2D normalMap) {
+	vec3 absNormal = abs(normal);
+
+	// Calculate triplanar blend
+	vec3 blendWeight = clamp(normal*normal*normal*normal,0.0,1.0);
+	// Divide blend weight by the sum of its components. This will make x + y + z = 1
+	blendWeight /= dot(blendWeight, vec3(1.0));
+
+	// Calculate triplanar coordinates
+	vec2 uvX = vertPos.zy * nscale.x + offset;
+	vec2 uvY = vertPos.xz * nscale.x + offset;
+	vec2 uvZ = vertPos.xy * nscale.x + offset;
+
+	// Sample tangent space normal maps
+	// UnpackNormal puts values in range [-1, 1] (and accounts for DXT5nm compression)
+	vec3 tangentNormalX = texture(normalMap, uvX).xyz;
+	vec3 tangentNormalY = texture(normalMap, uvY).xyz;
+	vec3 tangentNormalZ = texture(normalMap, uvZ).xyz;
+
+	// Swizzle normals to match tangent space and apply reoriented normal mapping blend
+	tangentNormalX = blend_rnm(vec3(normal.zy, absNormal.x), tangentNormalX);
+	tangentNormalY = blend_rnm(vec3(normal.xz, absNormal.y), tangentNormalY);
+	tangentNormalZ = blend_rnm(vec3(normal.xy, absNormal.z), tangentNormalZ);
+
+	// Apply input normal sign to tangent space Z
+	vec3 axisSign = sign(normal);
+	tangentNormalX.z *= axisSign.x;
+	tangentNormalY.z *= axisSign.y;
+	tangentNormalZ.z *= axisSign.z;
+
+	// Swizzle tangent normals to match input normal and blend together
+	vec3 outputNormal = normalize(
+		tangentNormalX.zyx * blendWeight.x +
+		tangentNormalY.xzy * blendWeight.y +
+		tangentNormalZ.xyz * blendWeight.z
+	);
+
+	return outputNormal;
+}
+
+
+vec4 triplanar_texture(vec3 vertPos, vec3 normal, vec2 offset, sampler2D tex) {
+	vec2 uvX = vertPos.zy * scale;
+	vec2 uvY = vertPos.xz * scale;
+	vec2 uvZ = vertPos.xy * scale;
+
+	vec4 colX = texture(tex, uvX);
+	vec4 colY = texture(tex, uvY);
+	vec4 colZ = texture(tex, uvZ);
+	// Square normal to make all values positive + increase blend sharpness
+	vec3 blendWeight = normal * normal;
+	// Divide blend weight by the sum of its components. This will make x + y + z = 1
+	blendWeight /= dot(blendWeight, vec3(1.0));
 	return colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
 }
 
@@ -44,10 +96,6 @@ vec3 lerp(vec3 v0,vec3 v1,float t)
 
 void vertex()
 	{
-	
-
-		
-		
 		nor = NORMAL;
 		vert = VERTEX;
 		steepnes = dot(NORMAL,VERTEX);
@@ -61,17 +109,23 @@ float scalmp(float f,float sc){
 }
 
 void fragment()
-	{
-		float trip = triplanar_texture(vert,nor,vec2(0.0,0.0),noise_tex).x + colorMixBias;
-		//ALBEDO = vec3(height,0.0,0.0); texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb *
-		vec3 col = texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb;
-		ALBEDO = mix(col,blendColor,scalmp(trip,sclampVal));
-		if (height < beach && dot(normalize(vert),nor) > beachSteepness){
-			ALBEDO = mix(beachColor,ALBEDO,height*(1.0/dot(normalize(vert),nor))*beachBlend);
-		}
-		//ALBEDO = vec3(nor.x,nor.y,nor.z);
+{
+	float trip = 1.0;//triplanar_texture(vert,nor,vec2(0.0,0.0),noise_tex).x + colorMixBias;
+	//ALBEDO = vec3(height,0.0,0.0); texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb *
+	vec3 col = texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb;
+	//ALBEDO = col*trip;
+	ALBEDO = mix(col,blendColor,scalmp(trip,sclampVal));
+	
+	if (height < beach && dot(normalize(vert),nor) > beachSteepness){
+		ALBEDO = mix(beachColor,ALBEDO,height*(1.0/dot(normalize(vert),nor))*beachBlend);
 	}
+	//ALBEDO = vec3(nor.x,nor.y,nor.z);
+}
 
+void light()
+{
+	DIFFUSE_LIGHT = LIGHT_COLOR*ALBEDO*dot(vec4(vec4(LIGHT,0)*INV_CAMERA_MATRIX).xyz,triplanarNormal(vert,nor,vec3(scale),vec2(0.0),noise_tex));
+}
 
 
 "
