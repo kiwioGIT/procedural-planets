@@ -1,0 +1,22 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://nicoe.tres" type="OpenSimplexNoise" id=1]
+[ext_resource path="res://nois.tres" type="Texture" id=2]
+[ext_resource path="res://sub_noise.tres" type="OpenSimplexNoise" id=3]
+
+[sub_resource type="NoiseTexture" id=1]
+noise = ExtResource( 1 )
+
+[sub_resource type="NoiseTexture" id=2]
+noise = ExtResource( 3 )
+
+[node name="Sprite" type="Sprite"]
+texture = SubResource( 1 )
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( 667.145, -4.75684 )
+texture = ExtResource( 2 )
+
+[node name="Sprite2" type="Sprite" parent="."]
+position = Vector2( 28.6321, 563.096 )
+texture = SubResource( 2 )

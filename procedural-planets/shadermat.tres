@@ -1,0 +1,35 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=2]
+
+[ext_resource path="res://shade.tres" type="Shader" id=1]
+
+[sub_resource type="Gradient" id=1]
+offsets = PoolRealArray( 0, 0.378698, 0.64497, 0.686391, 0.846154, 0.885714 )
+colors = PoolColorArray( 0.770361, 0.770361, 0.770361, 1, 0.224121, 0.224121, 0.224121, 1, 0.20459, 0.20459, 0.20459, 1, 0.290196, 0.192157, 0.129412, 1, 0.298828, 0.186369, 0.114395, 1, 0.0385261, 0.606934, 0, 1 )
+
+[sub_resource type="GradientTexture" id=2]
+gradient = SubResource( 1 )
+
+[sub_resource type="OpenSimplexNoise" id=3]
+octaves = 5
+
+[sub_resource type="NoiseTexture" id=4]
+width = 2000
+height = 2000
+seamless = true
+noise = SubResource( 3 )
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/elevation = null
+shader_param/elevation2 = null
+shader_param/colorMixBias = -1.0
+shader_param/beach = 1.0
+shader_param/beachColor = Vector3( 0.7, 0.7, 0 )
+shader_param/beachSteepness = 0.9
+shader_param/beachBlend = 1.0
+shader_param/sclampVal = 1.0
+shader_param/blendColor = Vector3( 0, 0.1, 0 )
+shader_param/scale = 0.04
+shader_param/blendSharpness = 0.0
+shader_param/noise_tex = SubResource( 4 )
+shader_param/gradient = SubResource( 2 )

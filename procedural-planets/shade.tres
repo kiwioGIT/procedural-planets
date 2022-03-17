@@ -1,0 +1,77 @@
+[gd_resource type="Shader" format=2]
+
+[resource]
+code = "shader_type spatial;
+
+varying float height;
+varying float steepnes;
+uniform float elevation;
+uniform float elevation2;
+uniform sampler2D noise_tex;
+uniform float colorMixBias;
+uniform float beach;
+uniform vec3 beachColor;
+uniform float beachSteepness;
+uniform float beachBlend;
+uniform float sclampVal;
+uniform vec3 blendColor;
+
+uniform float scale : hint_range(0,2) = 1.0;
+uniform float blendSharpness : hint_range(0,2) = 0.0;
+
+varying vec3 nor;
+varying vec3 vert;
+
+
+uniform sampler2D gradient: hint_black;
+
+vec4 triplanar_texture(vec3 position, vec3 normal, vec2 offset, sampler2D noise) {
+	vec4 colX = texture(noise, position.xy * scale + offset);
+	vec4 colY = texture(noise, position.xz * scale + offset);
+	vec4 colZ = texture(noise, position.zy * scale + offset);
+	
+	vec3 blendWeight = abs(normal);
+	blendWeight = vec3(pow(blendWeight.x, blendSharpness), pow(blendWeight.y, blendSharpness), pow(blendWeight.z, blendSharpness));
+	blendWeight /= (blendWeight.x + blendWeight.y + blendWeight.z);
+	
+	return colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
+}
+
+vec3 lerp(vec3 v0,vec3 v1,float t)
+	{
+		return (1.0 - t) * v0 + t * v1;
+	}
+
+void vertex()
+	{
+	
+
+		
+		
+		nor = NORMAL;
+		vert = VERTEX;
+		steepnes = dot(NORMAL,VERTEX);
+		
+		height = length((vec4(vert,0)*WORLD_MATRIX).xyz) - 300.0;
+		
+	}
+
+float scalmp(float f,float sc){
+	return clamp(((f-0.5)*sc)+0.5,0.0,1.0);
+}
+
+void fragment()
+	{
+		float trip = triplanar_texture(vert,nor,vec2(0.0,0.0),noise_tex).x + colorMixBias;
+		//ALBEDO = vec3(height,0.0,0.0); texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb *
+		vec3 col = texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb;
+		ALBEDO = mix(col,blendColor,scalmp(trip,sclampVal));
+		if (height < beach && dot(normalize(vert),nor) > beachSteepness){
+			ALBEDO = mix(beachColor,ALBEDO,height*(1.0/dot(normalize(vert),nor))*beachBlend);
+		}
+		//ALBEDO = vec3(nor.x,nor.y,nor.z);
+	}
+
+
+
+"

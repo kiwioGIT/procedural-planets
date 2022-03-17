@@ -1,0 +1,90 @@
+[gd_resource type="Shader" format=2]
+
+[resource]
+code = "shader_type spatial;
+
+render_mode unshaded;
+uniform vec3 cam_pos;
+uniform sampler2D gradient: hint_black;
+uniform sampler2D noise: hint_black;
+uniform samplerCube cub;
+uniform float alpha_falloff = 0.4;
+uniform float color_falloff = 0.015;
+uniform vec3 planet_pos = vec3(0.0,0.0,0.0);
+uniform float planet_radius = 300;
+
+varying mat4 cam;
+
+vec2 ray_sphere(vec3 centre, float radius, vec3 rayPos, vec4 rayDir0){
+	vec3 rayDir = rayDir0.xyz; 
+	rayDir = normalize(rayDir);
+	
+	vec3 offset = rayPos - centre;
+	float a = 1.0;
+	
+	float b = 2.0*dot(offset,rayDir);
+	float c = dot(offset,offset)-(radius*radius);
+	
+	float discriminant = (b*b)-(4.0*a*c);
+	if (discriminant > 0.0){
+		float s = sqrt(discriminant);
+		float distToSphereNear = max(0,(-b-s)/(2.0*a));
+		float distTosphereFar = (-b+s)/(2.0*a);
+		if (distTosphereFar >=0.0){
+			return vec2(distToSphereNear,distTosphereFar-distToSphereNear);
+		}
+		
+	}
+	else{
+		return vec2(-1.0,0.0);
+		}
+	
+}
+
+void fragment(){
+
+	ALPHA = 0.0;
+	float depth = texture(DEPTH_TEXTURE, SCREEN_UV).x;
+	vec3 ndc = vec3(SCREEN_UV, depth) * 2.0 - 1.0;
+	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
+	view.xyz /= view.w;
+	float linear_depth = -view.z;
+	vec2 hit = ray_sphere(vec3(0.0,0.0,0.0),300.0,cam_pos,cam*vec4(view.xyz,0));
+	vec4 world = cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
+  	vec3 world_position = world.xyz / world.w;
+	float oceanDepth = min(hit.y*0.1,length(world_position-cam_pos)-hit.x);
+	
+	if (oceanDepth > 0.0){
+		if (hit.x >= 0.0){
+		vec4 col = texture(gradient,vec2(1.0-exp(-oceanDepth*color_falloff),0));
+		ALBEDO = col.xyz;
+		ALPHA = 1.0-exp(-oceanDepth*alpha_falloff);
+		if (oceanDepth < 1.0 + sin(TIME)/2.0){
+			ALPHA = 0.9;
+			ALBEDO = vec3(1.0,1.0,1.0);
+		}
+		
+		}
+	}
+	if (dot((cam*vec4(view.xyz,0.0)).xyz,-cam_pos) < 0.0){
+			if (length(cam_pos - planet_pos) > planet_radius)
+			{
+			ALPHA = 0.0;
+			}
+		}
+	
+	
+	
+
+	
+	
+}
+
+void vertex() {
+	cam = CAMERA_MATRIX;
+	
+	POSITION = vec4(VERTEX, 1.0);
+}
+
+
+"

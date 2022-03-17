@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://mountain_mask.tres" type="OpenSimplexNoise" id=1]
+
+[sub_resource type="NoiseTexture" id=1]
+noise = ExtResource( 1 )
+
+[node name="Sprite" type="Sprite"]
+texture = SubResource( 1 )

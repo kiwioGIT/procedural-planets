@@ -1,0 +1,6 @@
+[gd_resource type="OpenSimplexNoise" format=2]
+
+[resource]
+seed = 11
+octaves = 1
+period = 26.2
