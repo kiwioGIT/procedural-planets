@@ -2,6 +2,6 @@
 
 [resource]
 seed = 5
-period = 24.4
+period = 48.7
 persistence = 0.897
 lacunarity = 0.65

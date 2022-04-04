@@ -19,14 +19,14 @@ func _input(event):
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _physics_process(delta):
 	if Input.is_action_pressed("ui_up"):
-		transform.origin += Vector3(0,0,-1).rotated(Vector3(0,1,0),rotation.y)
+		transform.origin += Vector3(0,0,-2).rotated(Vector3(0,1,0),rotation.y)
 	if Input.is_action_pressed("ui_down"):
-		transform.origin += Vector3(0,0,1).rotated(Vector3(0,1,0),rotation.y)
+		transform.origin += Vector3(0,0,2).rotated(Vector3(0,1,0),rotation.y)
 	if Input.is_action_pressed("ui_left"):
-		transform.origin += Vector3(-1,0,0).rotated(Vector3(0,1,0),rotation.y)
+		transform.origin += Vector3(-2,0,0).rotated(Vector3(0,1,0),rotation.y)
 	if Input.is_action_pressed("ui_right"):
-		transform.origin += Vector3(1,0,0).rotated(Vector3(0,1,0),rotation.y)
+		transform.origin += Vector3(2,0,0).rotated(Vector3(0,1,0),rotation.y)
 	if Input.is_action_pressed("space"):
-		transform.origin += Vector3(0,1,0).rotated(Vector3(0,1,0),rotation.y)
+		transform.origin += Vector3(0,2,0).rotated(Vector3(0,1,0),rotation.y)
 	if Input.is_action_pressed("shift"):
-		transform.origin += Vector3(0,-1,0).rotated(Vector3(0,1,0),rotation.y)
+		transform.origin += Vector3(0,-2,0).rotated(Vector3(0,1,0),rotation.y)

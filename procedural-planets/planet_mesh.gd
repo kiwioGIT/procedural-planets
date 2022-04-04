@@ -1,19 +1,22 @@
 extends MeshInstance
+tool
 
 export var normal : Vector3
 export var mat : ShaderMaterial
-export var noise_map : OpenSimplexNoise
+var noise_map : OpenSimplexNoise = load("res://nicoe.tres")
 var mountain_mask : OpenSimplexNoise = load("res://mountain_mask.tres")
 var ocean_mask : OpenSimplexNoise = load("res://ocean_mask.tres")
-export var second_noise_layer : OpenSimplexNoise = load("res://layer_2.tres")
-export var sub_noise : OpenSimplexNoise = load("res://sub_noise.tres")
+var second_noise_layer : OpenSimplexNoise = load("res://layer_2.tres")
+var sub_noise : OpenSimplexNoise = load("res://sub_noise.tres")
 var ocean_height = 50
 var ocean_floor = 50
 
-export var elevation = 305
-export var elevation2 = 25
-export var elevation3 = 3
-export var elevation4 = 0
+var ocean_surface = 600
+
+var elevation = 605
+var elevation2 = 60
+var elevation3 = 20
+var elevation4 = 0
 
 func regenerate_mesh():
 	
@@ -29,7 +32,7 @@ func regenerate_mesh():
 	var normal_array = PoolVector3Array()
 	var index_array = PoolIntArray()
 	
-	var resolution = 200
+	var resolution = 500
 	var num_vertices = resolution*resolution
 	var num_indexes = (resolution-1)*(resolution-1)*6
 	
@@ -91,6 +94,7 @@ func _update_mesh(arrays):
 	_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 	mat.set_shader_param("elevation",elevation)
 	mat.set_shader_param("elevation2",elevation2)
+	mat.set_shader_param("ocean_surface_height",ocean_surface)
 	_mesh.surface_set_material(0,mat)
 	
 	
@@ -107,7 +111,7 @@ func get_height(var pouc):
 	var mounmask = mountain_mask.get_noise_3dv(pouc*100)
 	var mountains =  1-abs(clamp(noise_map.get_noise_3dv(pouc*100)*1.8,-1,1))
 	#mountains *= mounmask
-	mountains = mountains*mountains*mountains*mountains
+	mountains = mountains*mountains*mountains#*mountains
 	mounmask = (mounmask + 1)/2
 	mountains *= mounmask
 	
@@ -124,6 +128,15 @@ func get_height(var pouc):
 	
 	
 	height += mountains*elevation2
+	
+	
+	var dist2oceansurface = height - ocean_surface
+	var expdist2oceansurface = exp(1/(dist2oceansurface))
+	dist2oceansurface *= expdist2oceansurface
+	
+	
+	
+	
 	return height
 
 func smin(var a, var b, var k):

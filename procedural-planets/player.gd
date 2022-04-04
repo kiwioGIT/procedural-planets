@@ -6,15 +6,15 @@ var add_velocity = Vector3.ZERO
 
 
 var velocity = Vector3(0,0,0)
-var ACCELERATION = 40
-const DEF_ACC = 8
-const DE_ACCELERATION = 8
-const MOVE_SPEED = 50
-const JUMP_FORCE = 55
-const GRAVITY = 1.70
-const MAX_FALL_SPEED = 500
-var mouse_captured = false
-var slide = false
+export var ACCELERATION = 4
+export var DEF_ACC = 3
+export var DE_ACCELERATION = 3
+export var MOVE_SPEED = 15
+export var JUMP_FORCE = 55
+export var GRAVITY = 1.6
+export var MAX_FALL_SPEED = 500
+export var mouse_captured = false
+export var slide = false
 const H_LOOK_SENS = 0.1
 const V_LOOK_SENS = 0.1
 var shootcooldown = 0
@@ -41,6 +41,7 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _input(event):
+	
 	if event is InputEventMouseMotion:
 		cam.rotation_degrees.x -= event.relative.y * V_LOOK_SENS
 		cam.rotation_degrees.x = clamp(cam.rotation_degrees.x, -89, 89)
@@ -54,7 +55,6 @@ func nat(var x):
 
 
 func _physics_process(delta):
-		
 		
 		get_node("Y-indi").global_transform.origin = global_transform.origin + Vector3.UP * 5
 		get_node("X-indi").global_transform.origin = global_transform.origin + Vector3.LEFT * 5
@@ -95,24 +95,51 @@ func _physics_process(delta):
 			move_vec -= Bxis;
 			
 			
-		if is_on_floor():
-			velocity -= normal * velocity.dot(normal)
+		#if is_on_floor():
+		#	velocity -= normal * velocity.dot(normal)
 			
 			
 		move_vec = move_vec.normalized()
-		if velocity.length() < MOVE_SPEED:
-			velocity += move_vec*ACCELERATION
-		if is_on_floor() and Input.is_action_pressed("space"):
-			velocity -= normal*JUMP_FORCE*2
-		
-		var new_ax = Axis * velocity.dot(Axis) * DE_ACCELERATION
-		var new_bx = Bxis * velocity.dot(Bxis) * DE_ACCELERATION
-		
-		velocity *= 0.95
-		
-		
 		velocity += normal * GRAVITY
-
+		if velocity.length() < 3:
+			velocity *= 0.6 
+		
+		#SPLIT VELOCITY TO HORIZONTAL AND VERTICAL
+		var vertical_velocity = velocity.dot(normal)
+		var horizontal_veloctiy = velocity - normal*vertical_velocity
+		
+		
+		if is_on_floor():
+			vertical_velocity = 0
+		
+		
+		
+		if horizontal_veloctiy.length() < MOVE_SPEED:
+			horizontal_veloctiy += move_vec if horizontal_veloctiy.length() > 3 else move_vec * 3
+		else:
+			horizontal_veloctiy = horizontal_veloctiy.normalized()*MOVE_SPEED
+		
+		var deacel = horizontal_veloctiy.normalized()*DE_ACCELERATION*0.1
+		
+		if horizontal_veloctiy.dot(deacel)>0:
+			horizontal_veloctiy -= deacel
+		else:
+			horizontal_veloctiy = Vector3(0,0,0)
+		
+		if is_on_floor() and Input.is_action_pressed("space"):
+			vertical_velocity -= JUMP_FORCE
+			#velocity -= normal*JUMP_FORCE*2
+		
+		#CONNECT HORIZONTAL AND VERTICAL VELOCITY TOGETHER
+		velocity = horizontal_veloctiy + normal*vertical_velocity
+		
+		
+		
+		
+	
+		
+		
+		
 		move_and_slide(velocity,-normal)
 		if Input.is_action_just_pressed("shift"):
 			velocity = Vector3.ZERO

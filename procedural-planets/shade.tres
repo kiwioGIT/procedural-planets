@@ -3,21 +3,56 @@
 [resource]
 code = "shader_type spatial;
 
+
+uniform float ocean_surface_height;
 varying float height;
 varying float steepnes;
 uniform float elevation;
 uniform float elevation2;
 uniform sampler2D noise_tex;
+
+uniform sampler2D rock_tex;/*
+uniform sampler2D rock_tex2;
+uniform sampler2D rock_tex3;
+uniform sampler2D rock_tex4;*/
+
+uniform float rock_scale;
+
 uniform float colorMixBias;
 uniform float beach;
-uniform vec3 beachColor;
+uniform sampler2D beachColor;
 uniform float beachSteepness;
 uniform float beachBlend;
 uniform float sclampVal;
 uniform vec3 blendColor;
 
+uniform float mountain_height;
+uniform vec4 mountainColor : hint_color;
+uniform float mountainSteepness;
+uniform float mountainBlend;
+uniform float secretMountainBlendValue;
+
+uniform float rock_bump_strenght;
+uniform float steep_power;
+
+uniform float mulColor;
+
+uniform sampler2D groundTexture;
+uniform float groundTextureScale;
+uniform float groundTextureBias;
+
+uniform float minBumpClamp = 0.0;
+uniform float maxBumpClamp = 1.0;
+
+uniform float smoothness = 1.0;
+
+uniform vec3 light_normal = vec3(1.0,0.0,0.0);
+
 uniform float scale : hint_range(0,2) = 1.0;
 uniform float blendSharpness : hint_range(0,2) = 0.0;
+
+uniform float rock_steep_bias;
+uniform float rock_flat_barier;
 
 varying vec3 nor;
 varying vec3 vert;
@@ -31,6 +66,14 @@ vec3 blend_rnm(vec3 n1, vec3 n2)
 	n2.xy = -n2.xy;
 
 	return n1 * dot(n1, n2) / n1.z - n2;
+}
+
+
+vec3 ObjectToTangentVector(vec4 tangent, vec3 normal, vec3 objectSpaceVector) {
+	vec3 normalizedTangent = normalize(tangent.xyz);
+	vec3 binormal = cross(normal, normalizedTangent) * tangent.w;
+	mat3 rot = mat3(normalizedTangent, binormal, normal);
+	return rot* objectSpaceVector;
 }
 
 vec3 triplanarNormal(vec3 vertPos, vec3 normal, vec3 nscale, vec2 offset, sampler2D normalMap) {
@@ -50,7 +93,7 @@ vec3 triplanarNormal(vec3 vertPos, vec3 normal, vec3 nscale, vec2 offset, sample
 	// UnpackNormal puts values in range [-1, 1] (and accounts for DXT5nm compression)
 	vec3 tangentNormalX = texture(normalMap, uvX).xyz;
 	vec3 tangentNormalY = texture(normalMap, uvY).xyz;
-	vec3 tangentNormalZ = texture(normalMap, uvZ).xyz;
+	vec3 tangentNormalZ =texture(normalMap, uvZ).xyz;
 
 	// Swizzle normals to match tangent space and apply reoriented normal mapping blend
 	tangentNormalX = blend_rnm(vec3(normal.zy, absNormal.x), tangentNormalX);
@@ -72,12 +115,15 @@ vec3 triplanarNormal(vec3 vertPos, vec3 normal, vec3 nscale, vec2 offset, sample
 
 	return outputNormal;
 }
+vec3 triplanarNormalTangentSpace(vec3 vertPos, vec3 normal, vec3 sscale, vec4 tangent, sampler2D normalMap) {
+	vec3 textureNormal = triplanarNormal(vertPos, normal, sscale, vec2(0.0), normalMap);
+	return ObjectToTangentVector(tangent, normal, textureNormal);
+}
 
-
-vec4 triplanar_texture(vec3 vertPos, vec3 normal, vec2 offset, sampler2D tex) {
-	vec2 uvX = vertPos.zy * scale;
-	vec2 uvY = vertPos.xz * scale;
-	vec2 uvZ = vertPos.xy * scale;
+vec4 triplanar_texture(vec3 vertPos, vec3 normal, vec2 offset,float tripscale, sampler2D tex) {
+	vec2 uvX = vertPos.zy * tripscale;
+	vec2 uvY = vertPos.xz * tripscale;
+	vec2 uvZ = vertPos.xy * tripscale;
 
 	vec4 colX = texture(tex, uvX);
 	vec4 colY = texture(tex, uvY);
@@ -96,11 +142,12 @@ vec3 lerp(vec3 v0,vec3 v1,float t)
 
 void vertex()
 	{
+		
 		nor = NORMAL;
 		vert = VERTEX;
 		steepnes = dot(NORMAL,VERTEX);
 		
-		height = length((vec4(vert,0)*WORLD_MATRIX).xyz) - 300.0;
+		height = length((vec4(vert,0)*WORLD_MATRIX).xyz) - ocean_surface_height;
 		
 	}
 
@@ -112,20 +159,34 @@ void fragment()
 {
 	float trip = 1.0;//triplanar_texture(vert,nor,vec2(0.0,0.0),noise_tex).x + colorMixBias;
 	//ALBEDO = vec3(height,0.0,0.0); texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb *
-	vec3 col = texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb;
+	float steep = dot(normalize(vert),normalize(nor));
+	vec3 col = texture(gradient,vec2(steep,0)).rgb;
+	col = mulColor*mix(col,blendColor,clamp(triplanar_texture(vert,nor,vec2(0.0),groundTextureScale,groundTexture).x+groundTextureBias,0.0,1.0));
 	//ALBEDO = col*trip;
-	ALBEDO = mix(col,blendColor,scalmp(trip,sclampVal));
+	//ALBEDO = mix(col,blendColor,scalmp(trip,sclampVal));
+	vec3 bump = triplanarNormal(vert,nor,vec3(scale),vec2(0.0),noise_tex);
 	
-	if (height < beach && dot(normalize(vert),nor) > beachSteepness){
-		ALBEDO = mix(beachColor,ALBEDO,height*(1.0/dot(normalize(vert),nor))*beachBlend);
+	vec3 rock_bump = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex);
+	/*vec3 rock_bump2 = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex2);
+	vec3 rock_bump3 = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex3);
+	vec3 rock_bump4 = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex4);*/
+	
+	/*vec3 rbum  = (rock_bump+rock_bump2+rock_bump3+rock_bump4)/vec3(4.0);*/
+	
+	bump = mix(rock_bump*rock_bump_strenght,bump,clamp(pow(steep+rock_steep_bias,steep_power),0.0,1.0));
+	
+	ALBEDO = col*dot(mix(nor,bump,smoothness),light_normal);
+	//ALBEDO = triplanar_texture(vert,nor,vec2(0.0),noise_tex).xyz;
+	
+
+	ALBEDO = mix(texture(beachColor,vec2(steep*beachSteepness,0)).xyz,ALBEDO,clamp(height*(1.0/steep)*beachBlend,0.0,1.0));
+	if (height > mountain_height && steep < mountainSteepness){
+		ALBEDO = mix(mountainColor.xyz,ALBEDO,clamp((secretMountainBlendValue*steep/height)*mountainBlend,0.0,1.0));
 	}
+	
+	
 	//ALBEDO = vec3(nor.x,nor.y,nor.z);
 }
 
-void light()
-{
-	DIFFUSE_LIGHT = LIGHT_COLOR*ALBEDO*dot(vec4(vec4(LIGHT,0)*INV_CAMERA_MATRIX).xyz,triplanarNormal(vert,nor,vec3(scale),vec2(0.0),noise_tex));
-}
-
-
-"
+void light(){
+}"

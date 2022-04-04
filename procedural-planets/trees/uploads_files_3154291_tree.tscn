@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://uploads_files_3154291_tree.fbx" type="PackedScene" id=1]
+[ext_resource path="res://trees/treeBoubleGreen_1.tres" type="ArrayMesh" id=2]
+[ext_resource path="res://trees/bigRock.tres" type="ArrayMesh" id=3]
+[ext_resource path="res://trees/rocks1.tres" type="ArrayMesh" id=4]
+[ext_resource path="res://trees/smolRock.tres" type="ArrayMesh" id=5]
+[ext_resource path="res://trees/spikeTree1.tres" type="ArrayMesh" id=6]
+
+[node name="uploads_files_3154291_tree" instance=ExtResource( 1 )]
+transform = Transform( 10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0 )
+
+[node name="LowPoly Tree 009" parent="RootNode" index="7"]
+mesh = ExtResource( 2 )
+
+[node name="rock" parent="RootNode" index="21"]
+mesh = ExtResource( 4 )
+
+[node name="rock001" parent="RootNode" index="22"]
+mesh = ExtResource( 5 )
+
+[node name="LowPoly Tree 029" parent="RootNode" index="37"]
+transform = Transform( -20.9596, -1.11912, -17.2847, -0.298612, 47.2379, -0.649392, 17.2941, -0.540678, -20.9594, -6.95022, 0.998637, -0.819895 )
+mesh = ExtResource( 6 )
+
+[node name="grass008" parent="RootNode" index="56"]
+transform = Transform( 111.951, 161.443, -5.85499e-06, -5.85499e-06, 2.34199e-05, 196.461, 161.443, -111.951, 2.34199e-05, 29.7527, -9.58612, -0.0717756 )
+
+[node name="rock002" parent="RootNode" index="74"]
+mesh = ExtResource( 3 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="." index="1"]
+transform = Transform( -0.338015, -0.941141, 0, -0.35271, 0.126677, 0.927118, -0.872549, 0.31338, -0.374768, 0, 8.80873, 0 )

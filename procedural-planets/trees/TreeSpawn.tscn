@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://TreeSpawn.gd" type="Script" id=1]
+
+[node name="TreeSpawn" type="Spatial"]
+script = ExtResource( 1 )
+spawnable_trees = PoolStringArray( "res://trees/BubleTree1.tscn", "res://trees/rock1.tscn", "res://trees/smolRock.tscn", "res://trees/spikeTree.tscn" )
+hiearchy = PoolIntArray( 0, 1, 2, 0 )
+
+[node name="RayCast" type="RayCast" parent="."]
+enabled = true
+exclude_parent = false
+cast_to = Vector3( 0, 0, -5000 )
+collision_mask = 2
