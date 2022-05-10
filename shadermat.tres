@@ -1,0 +1,65 @@
+[gd_resource type="ShaderMaterial" load_steps=10 format=2]
+
+[ext_resource path="res://shade.tres" type="Shader" id=1]
+[ext_resource path="res://maps/grass_normal.jpg" type="Texture" id=2]
+[ext_resource path="res://maps/combined.jpg" type="Texture" id=3]
+
+[sub_resource type="Gradient" id=7]
+offsets = PoolRealArray( 0.474286, 0.68 )
+colors = PoolColorArray( 0.116699, 0.0994377, 0.08251, 1, 0.644531, 0.630074, 0.274429, 1 )
+
+[sub_resource type="GradientTexture" id=8]
+gradient = SubResource( 7 )
+
+[sub_resource type="Gradient" id=1]
+offsets = PoolRealArray( 0.0228571, 0.48, 0.605714, 0.697143, 0.810651, 0.852071 )
+colors = PoolColorArray( 0.224121, 0.224121, 0.224121, 1, 0.208534, 0.208534, 0.208534, 1, 0.20459, 0.20459, 0.20459, 1, 0.290196, 0.192157, 0.129412, 1, 0.298828, 0.186369, 0.114395, 1, 0.0518847, 0.817383, 0, 1 )
+
+[sub_resource type="GradientTexture" id=2]
+gradient = SubResource( 1 )
+
+[sub_resource type="OpenSimplexNoise" id=5]
+seed = -6
+octaves = 5
+
+[sub_resource type="NoiseTexture" id=6]
+width = 2000
+height = 2000
+seamless = true
+noise = SubResource( 5 )
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/ocean_surface_height = 600
+shader_param/elevation = 605
+shader_param/elevation2 = 60
+shader_param/rock_scale = 0.164
+shader_param/colorMixBias = 0.166
+shader_param/beach = 2.893
+shader_param/beachSteepness = 0.655
+shader_param/beachBlend = 0.284
+shader_param/sclampVal = 1.226
+shader_param/blendColor = Vector3( 0, 0.1, 0 )
+shader_param/mountain_height = 14.518
+shader_param/mountainColor = Color( 1, 1, 1, 1 )
+shader_param/mountainSteepness = 2.318
+shader_param/mountainBlend = 120.214
+shader_param/secretMountainBlendValue = 0.411
+shader_param/rock_bump_strenght = 2.066
+shader_param/steep_power = 3.229
+shader_param/mulColor = 0.611
+shader_param/groundTextureScale = 0.024
+shader_param/groundTextureBias = -0.563
+shader_param/minBumpClamp = 0.01
+shader_param/maxBumpClamp = 0.909
+shader_param/smoothness = 0.97
+shader_param/light_normal = Vector3( 1, 0, 0 )
+shader_param/scale = 0.195
+shader_param/blendSharpness = 0.0
+shader_param/rock_steep_bias = 0.308
+shader_param/rock_flat_barier = 2.612
+shader_param/noise_tex = ExtResource( 2 )
+shader_param/rock_tex = ExtResource( 3 )
+shader_param/beachColor = SubResource( 8 )
+shader_param/groundTexture = SubResource( 6 )
+shader_param/gradient = SubResource( 2 )
