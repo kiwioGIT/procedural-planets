@@ -15,10 +15,10 @@ noise = SubResource( 3 )
 
 [resource]
 shader = ExtResource( 1 )
-shader_param/cam_pos = null
+shader_param/cam_pos = Vector3( 0, 0, 0 )
 shader_param/alpha_falloff = 0.7
 shader_param/color_falloff = 0.05
 shader_param/planet_pos = Vector3( 0, 0, 0 )
-shader_param/planet_radius = 300.0
+shader_param/planet_radius = 600.0
 shader_param/gradient = SubResource( 2 )
 shader_param/noise = SubResource( 4 )

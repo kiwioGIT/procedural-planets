@@ -21,9 +21,10 @@ func _ready():
 
 # Called when the node enters the scene tree for the first time.
 func spawn_tree():
-	get_node("RayCast").look_at(Vector3.ZERO,Vector3.UP)
 	
+	get_node("RayCast").look_at(Vector3.ZERO,Vector3.UP)
 	if !get_node("RayCast").is_colliding():
+		print("no coll")
 		return
 	var rng = RandomNumberGenerator.new()
 	rng.seed = 1000*(global_transform.origin.x + global_transform.origin.y + global_transform.origin.z) * first_layer_hiearchy 

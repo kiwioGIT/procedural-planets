@@ -1,0 +1,82 @@
+[gd_resource type="Shader" format=2]
+
+[resource]
+code = "shader_type spatial;
+render_mode specular_schlick_ggx;
+
+uniform float Glow_Power : hint_range(0,10) = 3;
+uniform float Lightness_Difference : hint_range(0,10) = 3;
+uniform vec4 Sun_Color : hint_color;
+
+uniform sampler2D voronoi_noise;
+uniform sampler2D emission_noise;
+varying vec3 vertex_pos;
+uniform float waveSpeed : hint_range(0,1) = 0.1;
+uniform float fresnel : hint_range(0,2) = 1.0;
+
+uniform float scale : hint_range(0,2) = 0.01;
+uniform float blendSharpness : hint_range(0,2) = 0.0;
+
+varying vec3 uv1_triplanar_pos;
+uniform float uv1_blend_sharpness;
+varying vec3 uv1_power_normal;
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+varying vec3 nor;
+
+// TRIPLANAR FUNCTION
+vec4 triplanar_texture_(vec3 vertPos, vec3 normal, vec2 offset,float tripscale, sampler2D tex) {
+	vec2 uvX = vertPos.zy * tripscale + offset.x;
+	vec2 uvY = vertPos.xz * tripscale + offset.x;
+	vec2 uvZ = vertPos.xy * tripscale + offset.x;
+
+	vec4 colX = texture(tex, uvX);
+	vec4 colY = texture(tex, uvY);
+	vec4 colZ = texture(tex, uvZ);
+	// Square normal to make all values positive + increase blend sharpness
+	vec3 blendWeight = normal * normal;
+	// Divide blend weight by the sum of its components. This will make x + y + z = 1
+	blendWeight /= dot(blendWeight, vec3(1.0));
+	return colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
+}
+
+vec4 triplanar_texture(vec3 position, vec3 normal, vec2 offset, sampler2D noise) {
+	vec4 colX = texture(noise, position.xy * scale + offset);
+	vec4 colY = texture(noise, position.xz * scale + offset);
+	vec4 colZ = texture(noise, position.zy * scale + offset);
+	
+	vec3 blendWeight = abs(normal);
+	blendWeight = vec3(pow(blendWeight.x, blendSharpness), pow(blendWeight.y, blendSharpness), pow(blendWeight.z, blendSharpness));
+	blendWeight /= (blendWeight.x + blendWeight.y + blendWeight.z);
+	
+	return colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
+}
+
+void vertex() {
+	vertex_pos = VERTEX;
+	nor = NORMAL;
+	uv1_power_normal=pow(abs(NORMAL),vec3(uv1_blend_sharpness));
+	uv1_power_normal/=dot(uv1_power_normal,vec3(1.0));
+	uv1_triplanar_pos = VERTEX * uv1_scale + uv1_offset;
+	uv1_triplanar_pos *= vec3(1.0,-1.0, 1.0);
+}
+
+void fragment() {
+	// Fresnel
+	float fresnel_out = pow(fresnel - clamp(dot(NORMAL, VIEW), 0.0, fresnel), fresnel);
+
+	vec2 waveOffsetA = vec2(TIME * waveSpeed, TIME * waveSpeed * 0.8);
+	vec2 waveOffsetB = vec2(TIME * waveSpeed * - 0.8, TIME * waveSpeed * -0.3);
+	vec2 result_offset = waveOffsetA + waveOffsetB;
+	//triplanar_texture_(voronoi_noise,uv1_power_normal,uv1_triplanar_pos);
+	vec3 cloud_tex = triplanar_texture_(vertex_pos, nor, result_offset,scale,voronoi_noise).rgb;
+
+	vec3 cloud_tex_with_light = cloud_tex * vec3(Lightness_Difference);
+	vec3 cloud_tex_with_light_with_color = cloud_tex_with_light * Sun_Color.rgb;
+	vec3 cloud_tex_with_light_with_color_with_glow = vec3(Glow_Power) * cloud_tex_with_light_with_color;
+
+	vec3 noise_tex = triplanar_texture_(vertex_pos, nor, result_offset,scale, emission_noise).rgb;
+	vec3 result = cloud_tex_with_light_with_color_with_glow * noise_tex;
+
+	EMISSION = vec3(fresnel_out) * result;
+}"

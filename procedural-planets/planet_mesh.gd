@@ -2,27 +2,10 @@ extends MeshInstance
 tool
 
 export var normal : Vector3
-export var mat : ShaderMaterial
-var noise_map : OpenSimplexNoise = load("res://nicoe.tres")
-var mountain_mask : OpenSimplexNoise = load("res://mountain_mask.tres")
-var ocean_mask : OpenSimplexNoise = load("res://ocean_mask.tres")
-var second_noise_layer : OpenSimplexNoise = load("res://layer_2.tres")
-var sub_noise : OpenSimplexNoise = load("res://sub_noise.tres")
-var ocean_height = 50
-var ocean_floor = 50
 
-var ocean_surface = 600
 
-var elevation = 605
-var elevation2 = 60
-var elevation3 = 20
-var elevation4 = 0
 
-func regenerate_mesh():
-	
-	
-	
-	
+func regenerate_mesh(planet_data : PlanetData):
 	
 	var arrays = []
 	arrays.resize(Mesh.ARRAY_MAX)
@@ -32,7 +15,7 @@ func regenerate_mesh():
 	var normal_array = PoolVector3Array()
 	var index_array = PoolIntArray()
 	
-	var resolution = 500
+	var resolution = 200
 	var num_vertices = resolution*resolution
 	var num_indexes = (resolution-1)*(resolution-1)*6
 	
@@ -53,7 +36,7 @@ func regenerate_mesh():
 			var percent = Vector2(x,y)/(resolution-1) 
 			#var pouc = normal + (percent.x-0.5) * 2 * Axis + (percent.y-0.5) * 2 * Bxis
 			var pouc = normal - Axis - Bxis + (Axis*x*2/(resolution-1)) + (Bxis*y*2/(resolution-1))
-			vertex_array[i] = pouc.normalized() * get_height(pouc)
+			vertex_array[i] = pouc.normalized() * get_height(pouc,planet_data,false)
 			if x != resolution-1 and y != resolution-1:
 				index_array[tri_index] = i+resolution
 				index_array[tri_index+1] = i+resolution+1
@@ -86,59 +69,78 @@ func regenerate_mesh():
 	arrays[Mesh.ARRAY_INDEX] = index_array
 	arrays[Mesh.ARRAY_TEX_UV] = uv_array
 	
-	call_deferred("_update_mesh",arrays)
+	call_deferred("_update_mesh",arrays,planet_data)
 	
-func _update_mesh(arrays):
+func _update_mesh(arrays,planet_data : PlanetData):
 	print("again")
 	var _mesh = ArrayMesh.new()
 	_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
-	mat.set_shader_param("elevation",elevation)
-	mat.set_shader_param("elevation2",elevation2)
-	mat.set_shader_param("ocean_surface_height",ocean_surface)
+	var mat = get_surface_material(0)
+	mat.set_shader_param("elevation",planet_data.elevation)
+	mat.set_shader_param("elevation2",planet_data.elevation2)
+	mat.set_shader_param("ocean_surface_height",planet_data.ocean_surface)
 	_mesh.surface_set_material(0,mat)
 	
-	
-	
 	mesh = _mesh
-	
 	get_node("StaticBody/CollisionShape").shape = mesh.create_trimesh_shape()
 	
 	
-func get_height(var pouc):
+
+func get_height(var pouc,planet_data : PlanetData,pass_check):
 	var height = 0
-	height += elevation
+	
+	height += planet_data.elevation
+	var kontinent
+	if planet_data.smin_kontinents:
+		kontinent =  smin(planet_data.kontinent_noise.get_noise_3dv(pouc*100)+planet_data.kontinent_bias,planet_data.kontinent_noise2.get_noise_3dv(pouc*100)+planet_data.kontinent_bias,0.9)
+	else:
+		kontinent = planet_data.kontinent_noise.get_noise_3dv(pouc*100)
+	height -= smin(-1*kontinent * planet_data.kontinent_elevation,0,0.8)
+	var kontinent_mul = clamp(abs(pow(kontinent*planet_data.kontinent_border,planet_data.kontinent_border_exponent)),-1,1)
+	if kontinent < 0:
+		kontinent_mul *= -1
 	# (elevation + max(0,0.3+mountain_mask.get_noise_3dv(pouc*100))*(abs(noise_map.get_noise_3dv(pouc*100)) * elevation2) + max(0,0.4+ocean_mask.get_noise_3dv(pouc*100))*(abs(sub_noise.get_noise_3dv(pouc*100)) * elevation3))# + (second_noise_layer.get_noise_3dv(pouc*100)*pouc*elevation3) + (sub_noise.get_noise_3dv(pouc*100)*pouc*elevation4);
-	var mounmask = mountain_mask.get_noise_3dv(pouc*100)
-	var mountains =  1-abs(clamp(noise_map.get_noise_3dv(pouc*100)*1.8,-1,1))
-	#mountains *= mounmask
-	mountains = mountains*mountains*mountains#*mountains
+	var mounmask = clamp(planet_data.mountain_mask.get_noise_3dv(pouc*100)+planet_data.mountain_mask_bias,-1,1)
+	var mountains =  1-abs(clamp(planet_data.noise_map.get_noise_3dv(pouc*100)*1.8,-1,1))
+	
+	mountains = mountains#*mountains#*mountains
 	mounmask = (mounmask + 1)/2
 	mountains *= mounmask
 	
+	#var ocean =  max(0,planet_data.sub_noise.get_noise_3dv(pouc*100)*1.8)*((mounmask*-1)+1)+planet_data.ocean_mask_bias
+	#ocean = smin(ocean*planet_data.ocean_height,planet_data.ocean_floor,0.5)
+	#height += ocean if kontinent < 0 else 0
+	var ocean = (planet_data.sub_noise.get_noise_3dv(pouc*100)+1)/2 * min(0,kontinent)
+	height += ocean * planet_data.ocean_height if kontinent < 0 else 0
+	mountains = max(0,mountains)
+	var little_blobs = planet_data.second_noise_layer.get_noise_3dv(pouc*100)
+	height += little_blobs*planet_data.elevation3
+	height += mountains*planet_data.elevation2 * max(0,kontinent_mul)
 	
-	var ocean =  max(0,sub_noise.get_noise_3dv(pouc*100)*1.8)*((mounmask*-1)+1)
-	mountains -= ocean/3
-	ocean = smin(ocean*ocean_height,ocean_floor,0.5)
-	
-	
-	height -= ocean
-	
-	var little_blobs = second_noise_layer.get_noise_3dv(pouc*100)
-	height += little_blobs*elevation3
-	
-	
-	height += mountains*elevation2
-	
-	
-	var dist2oceansurface = height - ocean_surface
-	var expdist2oceansurface = exp(1/(dist2oceansurface))
-	dist2oceansurface *= expdist2oceansurface
+	var high_mountains = planet_data.high_mountains.get_noise_3dv(pouc*100)
+	var high_mountains_mask = clamp(planet_data.high_mountains_mask.get_noise_3dv(pouc*100)*8+planet_data.high_mountains_bias,0,1)
+	high_mountains = pow(high_mountains,planet_data.high_mountains_power) * (height-planet_data.ocean_surface) * high_mountains_mask
+	height += max(high_mountains*planet_data.high_mountains_elevation,0)
 	
 	
 	
+	#final smoothing
+	#var dist2oceansurface = height - planet_data.ocean_surface
 	
+	
+	#var smoothed = clamp(max(0,pow(dist2oceansurface/planet_data.beach_smoothing,2)),-1,1)
+	#height = dist2oceansurface*smoothed + planet_data.ocean_surface
+	
+
 	return height
+
 
 func smin(var a, var b, var k):
   var h = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
   return lerp(a, b, h) - k*h*(1.0-h);
+
+func scalmp(f,sc,min_,max_):
+	return clamp(((f-0.5)*sc)+0.5,min_,max_)
+
+
+

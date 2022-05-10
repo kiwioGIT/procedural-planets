@@ -14,6 +14,7 @@ uniform vec3 planet_pos = vec3(0.0,0.0,0.0);
 uniform float planet_radius = 300;
 
 varying mat4 cam;
+varying vec3 camera_pos;
 
 vec2 ray_sphere(vec3 centre, float radius, vec3 rayPos, vec4 rayDir0){
 	vec3 rayDir = rayDir0.xyz; 
@@ -49,7 +50,7 @@ void fragment(){
 	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
 	view.xyz /= view.w;
 	float linear_depth = -view.z;
-	vec2 hit = ray_sphere(vec3(0.0,0.0,0.0),300.0,cam_pos,cam*vec4(view.xyz,0));
+	vec2 hit = ray_sphere(vec3(0.0,0.0,0.0),planet_radius,camera_pos,cam*vec4(view.xyz,0));
 	vec4 world = cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
   	vec3 world_position = world.xyz / world.w;
 	float oceanDepth = min(hit.y*0.1,length(world_position-cam_pos)-hit.x);
@@ -66,13 +67,12 @@ void fragment(){
 		
 		}
 	}
-	if (dot((cam*vec4(view.xyz,0.0)).xyz,-cam_pos) < 0.0){
-			if (length(cam_pos - planet_pos) > planet_radius)
+	if (dot((cam*vec4(view.xyz,0.0)).xyz,-camera_pos) < 0.0){
+			if (length(camera_pos - planet_pos) > planet_radius)
 			{
 			ALPHA = 0.0;
 			}
 		}
-	
 	
 	
 
@@ -82,7 +82,7 @@ void fragment(){
 
 void vertex() {
 	cam = CAMERA_MATRIX;
-	
+	camera_pos = (CAMERA_MATRIX * vec4(0.0,0.0,0.0,1.0)).xyz;
 	POSITION = vec4(VERTEX, 1.0);
 }
 

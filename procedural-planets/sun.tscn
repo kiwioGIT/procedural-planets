@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://maps/2b129e2bf59d40760e42c624920ed9be.jpg" type="Texture" id=1]
+[ext_resource path="res://sun_shader.tres" type="Shader" id=2]
+
+[sub_resource type="SphereMesh" id=1]
+radius = 1200.0
+height = 2400.0
+
+[sub_resource type="OpenSimplexNoise" id=5]
+octaves = 4
+period = 9.5
+persistence = 0.73
+
+[sub_resource type="NoiseTexture" id=6]
+noise = SubResource( 5 )
+
+[sub_resource type="ShaderMaterial" id=7]
+shader = ExtResource( 2 )
+shader_param/Glow_Power = 0.965
+shader_param/Lightness_Difference = 7.179
+shader_param/Sun_Color = Color( 0.945098, 0.317647, 0, 1 )
+shader_param/waveSpeed = 0.1
+shader_param/fresnel = 1.568
+shader_param/scale = 0.001
+shader_param/blendSharpness = 0.0
+shader_param/uv1_blend_sharpness = 2.0
+shader_param/uv1_scale = null
+shader_param/uv1_offset = null
+shader_param/voronoi_noise = ExtResource( 1 )
+shader_param/emission_noise = SubResource( 6 )
+
+[node name="Spatial" type="Spatial"]
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+mesh = SubResource( 1 )
+material/0 = SubResource( 7 )

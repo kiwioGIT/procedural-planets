@@ -2,7 +2,7 @@
 
 [ext_resource path="res://TreeSpawn.gd" type="Script" id=1]
 
-[node name="TreeSpawn" type="Spatial"]
+[node name="TreeSpawn" type="Spatial" groups=["tspwn"]]
 script = ExtResource( 1 )
 spawnable_trees = PoolStringArray( "res://trees/BubleTree1.tscn", "res://trees/rock1.tscn", "res://trees/smolRock.tscn", "res://trees/spikeTree.tscn" )
 hiearchy = PoolIntArray( 0, 1, 2, 0 )
