@@ -1,0 +1,32 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=2]
+
+[ext_resource path="res://grass_blade_shader.tres" type="Shader" id=1]
+
+[sub_resource type="Gradient" id=1]
+colors = PoolColorArray( 0, 0.0745098, 0.0117647, 1, 0.122167, 0.414063, 0.0404358, 1 )
+
+[sub_resource type="GradientTexture" id=2]
+gradient = SubResource( 1 )
+
+[sub_resource type="OpenSimplexNoise" id=3]
+octaves = 1
+period = 57.3
+persistence = 1.0
+lacunarity = 0.1
+
+[sub_resource type="NoiseTexture" id=4]
+width = 100
+height = 100
+noise = SubResource( 3 )
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/stable_lenght = 0.5
+shader_param/sway = 0.855
+shader_param/sway_ = 0.892
+shader_param/sway_pow = 2.0
+shader_param/sway_dir = Vector3( 1, 0, 0 )
+shader_param/color_scale = 0.422
+shader_param/color_grad_height = -0.25
+shader_param/sway_noise = SubResource( 4 )
+shader_param/color_grad = SubResource( 2 )

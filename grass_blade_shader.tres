@@ -1,0 +1,40 @@
+[gd_resource type="Shader" format=2]
+
+[resource]
+code = "shader_type spatial;
+uniform float stable_lenght = 0.5;
+uniform float sway = 0.5;
+uniform float sway_ = 2.0;
+uniform float sway_pow = 2;
+
+uniform vec3 sway_dir = vec3(1.0,0.0,0.0);
+uniform sampler2D sway_noise;
+
+uniform float color_scale;
+uniform float color_grad_height;
+uniform sampler2D color_grad;
+render_mode cull_disabled;
+
+varying float fasdf;
+varying vec3 vert;
+
+void fragment()
+{
+	//ALBEDO = texture(color_grad,vec2((vert.y+color_grad_height)*color_scale,0)).xyz;
+	ALBEDO = vec3(fasdf);
+	TRANSMISSION = vec3(1.0,1.0,1.0);
+}
+
+void vertex()
+{
+	
+	vec4 sway_dir_local = vec4(sway_dir,0.0) * WORLD_MATRIX;
+	vec3 world_vertex = (vec4(VERTEX,0.0) * WORLD_MATRIX).xyz;
+	fasdf = texture(sway_noise,world_vertex.xz*vec2(1,1)).x;
+	vert = VERTEX;
+	VERTEX += normalize(sway_dir_local.xyz) * sway * (VERTEX.y) *  texture(sway_noise,world_vertex.xz*vec2(0.01,0.01)).x;
+	float _lenght = 1.0;
+	VERTEX.y -= sway_*abs(pow(VERTEX.x,sway_pow));
+	//VERTEX += (vec4(500.0,0.0,0.0,0.0)*WORLD_MATRIX).xyz;
+	
+}"
