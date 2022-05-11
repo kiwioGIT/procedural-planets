@@ -89,9 +89,9 @@ vec3 triplanarNormal(vec3 vertPos, vec3 normal, vec3 nscale, vec2 offset, sample
 
 	// Sample tangent space normal maps
 	// UnpackNormal puts values in range [-1, 1] (and accounts for DXT5nm compression)
-	vec3 tangentNormalX = unpack_normal(texture(normalMap, uvX).xyz);
-	vec3 tangentNormalY = unpack_normal(texture(normalMap, uvY).xyz);
-	vec3 tangentNormalZ = unpack_normal(texture(normalMap, uvZ).xyz);
+	vec3 tangentNormalX = texture(normalMap, uvX).xyz;
+	vec3 tangentNormalY = texture(normalMap, uvY).xyz;
+	vec3 tangentNormalZ = texture(normalMap, uvZ).xyz;
 
 	// Swizzle normals to match tangent space and apply reoriented normal mapping blend
 	tangentNormalX = blend_rnm(vec3(normal.zy, absNormal.x), tangentNormalX);
@@ -172,7 +172,7 @@ void fragment()
 	
 	bump = mix(rock_bump*rock_bump_strenght,bump,clamp(pow(steep+rock_steep_bias,steep_power),0.0,1.0));
 	
-	ALBEDO = col*dot(mix(nor,bump,smoothness),light_normal);
+	ALBEDO = col*max(dot(mix(nor,bump,smoothness),light_normal),0);
 	//ALBEDO = triplanar_texture(vert,nor,vec2(0.0),noise_tex).xyz;
 	
 

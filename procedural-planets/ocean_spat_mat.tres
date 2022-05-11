@@ -11,7 +11,7 @@ height = 2000
 noise = SubResource( 6 )
 
 [sub_resource type="Gradient" id=1]
-colors = PoolColorArray( 0.0883026, 0.114968, 0.313965, 1, 0, 0.0130011, 0.0327148, 1 )
+colors = PoolColorArray( 0.0883026, 0.114968, 0.313965, 1, 0.000371933, 0.0380632, 0.0952148, 1 )
 
 [sub_resource type="GradientTexture" id=2]
 gradient = SubResource( 1 )
@@ -45,8 +45,8 @@ shader_param/specularOffsetA = null
 shader_param/specularOffsetB = null
 shader_param/specbump = 1.668
 shader_param/specScale = 0.01
-shader_param/alpha_falloff = 0.3
-shader_param/color_falloff = 0.06
+shader_param/alpha_falloff = 0.132
+shader_param/color_falloff = 0.019
 shader_param/planet_pos = Vector3( 0, 0, 0 )
 shader_param/planet_radius = 1200.0
 shader_param/light_normal = Vector3( 1, 0, 0 )

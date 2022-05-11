@@ -1,8 +1,25 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://Spatial.tscn" type="PackedScene" id=1]
 [ext_resource path="res://player.tscn" type="PackedScene" id=2]
 [ext_resource path="res://planet_res.tres" type="Resource" id=3]
+
+[sub_resource type="ProceduralSky" id=6]
+sky_top_color = Color( 0, 0, 0, 1 )
+sky_horizon_color = Color( 0, 0, 0, 1 )
+ground_bottom_color = Color( 0, 0, 0, 1 )
+ground_horizon_color = Color( 0, 0, 0, 1 )
+sun_color = Color( 0.815686, 0.486275, 0.133333, 1 )
+sun_latitude = 90.0
+sun_angle_min = 7.95
+sun_angle_max = 55.29
+sun_curve = 0.0133972
+
+[sub_resource type="Environment" id=5]
+background_mode = 2
+background_sky = SubResource( 6 )
+background_sky_orientation = Basis( -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1 )
+ambient_light_sky_contribution = 0.0
 
 [sub_resource type="CubeMesh" id=3]
 
@@ -12,16 +29,17 @@ albedo_color = Color( 0, 0.25098, 0.415686, 1 )
 [node name="world" type="Spatial"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource( 5 )
 
 [node name="planet" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 51.6675, 89.3147, 40.768 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 planet_data = ExtResource( 3 )
 num_of_trees = 0
 activate_physics = true
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
-transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 3071.99, 1101.98, 568.798 )
-light_energy = 2.174
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 1643.8, 1101.98, 568.798 )
+light_energy = 1.364
 light_specular = 0.0
 shadow_enabled = true
 directional_shadow_normal_bias = 10.0
@@ -33,7 +51,7 @@ mesh = SubResource( 3 )
 material/0 = SubResource( 4 )
 
 [node name="player" parent="." instance=ExtResource( 2 )]
-transform = Transform( 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, -195.037, 964.973, 1415.58 )
+transform = Transform( 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 1240.7, 0, 302.494 )
 
 [node name="Position3D" type="Position3D" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 651.314, 19.6379, 121.832 )
