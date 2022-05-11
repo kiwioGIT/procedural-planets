@@ -4,17 +4,108 @@
 code = "shader_type spatial;
 
 render_mode unshaded;
-uniform vec3 cam_pos;
+
+uniform float waveSpeed;
+uniform vec2 specularOffsetA;
+uniform vec2 specularOffsetB;
+uniform float specbump;
+uniform float specScale;
+varying vec3 cam_pos;
 uniform sampler2D gradient: hint_black;
 uniform sampler2D noise: hint_black;
+uniform sampler2D specCol : hint_albedo;
+uniform sampler2D noiseB;
 uniform samplerCube cub;
 uniform float alpha_falloff = 0.4;
 uniform float color_falloff = 0.015;
 uniform vec3 planet_pos = vec3(0.0,0.0,0.0);
-uniform float planet_radius = 300;
+uniform float planet_radius = 600;
+uniform vec3 light_normal = vec3(1.0,0.0,0.0); 
+uniform vec2 multiplyscalelo = vec2(1.0,1.0);
+uniform vec2 foamscale = vec2(1.0,1.0);
+uniform sampler2D foamNoise;
+uniform float foamnoiseweight;
+uniform float scale = 1.0;
+uniform float inTexScale = 1.0;
+uniform float bumpScale;
+uniform float specularmul;
+uniform float specularsub;
+uniform float smoothness;
 
 varying mat4 cam;
-varying vec3 camera_pos;
+
+vec3 unpack_normal(vec3 nor){ //Pomatujte na toto posvátné místo kde pavel strávil 2 hodiny než pochopil že tam musí dát tady tohle
+	return nor*2.0 - vec3(1.0,1.0,1.0);
+}
+
+
+vec3 blend_rnm(vec3 n1, vec3 n2)
+{
+	n1.z += 1.0;
+	n2.xy = -n2.xy;
+
+	return n1 * dot(n1, n2) / n1.z - n2;
+}
+
+vec3 triplanarNormal(vec3 vertPos, vec3 normal, float nscale, vec2 offset, sampler2D normalMap) {
+	vec3 absNormal = abs(normal);
+
+	// Calculate triplanar blend
+	vec3 blendWeight = clamp(normal*normal*normal*normal,0.0,1.0);
+	// Divide blend weight by the sum of its components. This will make x + y + z = 1
+	blendWeight /= dot(blendWeight, vec3(1.0));
+
+	// Calculate triplanar coordinates
+	vec2 uvX = vertPos.zy * nscale + offset;
+	vec2 uvY = vertPos.xz * nscale + offset;
+	vec2 uvZ = vertPos.xy * nscale + offset;
+
+	// Sample tangent space normal maps
+	// UnpackNormal puts values in range [-1, 1] (and accounts for DXT5nm compression)
+	vec3 tangentNormalX = unpack_normal(texture(normalMap, uvX).xyz);
+	vec3 tangentNormalY = unpack_normal(texture(normalMap, uvY).xyz);
+	vec3 tangentNormalZ = unpack_normal(texture(normalMap, uvZ).xyz);
+
+	// Swizzle normals to match tangent space and apply reoriented normal mapping blend
+	tangentNormalX = blend_rnm(vec3(normal.zy, absNormal.x), tangentNormalX);
+	tangentNormalY = blend_rnm(vec3(normal.xz, absNormal.y), tangentNormalY);
+	tangentNormalZ = blend_rnm(vec3(normal.xy, absNormal.z), tangentNormalZ);
+
+	// Apply input normal sign to tangent space Z
+	vec3 axisSign = sign(normal);
+	tangentNormalX.z *= axisSign.x;
+	tangentNormalY.z *= axisSign.y;
+	tangentNormalZ.z *= axisSign.z;
+
+	// Swizzle tangent normals to match input normal and blend together
+	vec3 outputNormal = normalize(
+		tangentNormalX.zyx * blendWeight.x +
+		tangentNormalY.xzy * blendWeight.y +
+		tangentNormalZ.xyz * blendWeight.z
+	);
+
+	return outputNormal;
+}
+
+
+
+
+
+
+vec4 triplanar_texture(vec3 position, vec3 normal, vec2 offset, sampler2D noise_) {
+	vec4 colX = texture(noise_, position.xy * scale + offset);
+	vec4 colY = texture(noise_, position.xz * scale + offset);
+	vec4 colZ = texture(noise_, position.zy * scale + offset);
+	
+	vec3 blendWeight = abs(normal);
+	blendWeight = normalize(max(blendWeight, 0.00001)); // Force weights to sum to 1.0
+	float b = (blendWeight.x + blendWeight.y + blendWeight.z);
+	blendWeight /= vec3(b, b, b);
+	return colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
+	
+	}
+
+
 
 vec2 ray_sphere(vec3 centre, float radius, vec3 rayPos, vec4 rayDir0){
 	vec3 rayDir = rayDir0.xyz; 
@@ -42,6 +133,12 @@ vec2 ray_sphere(vec3 centre, float radius, vec3 rayPos, vec4 rayDir0){
 	
 }
 
+
+vec3 matMulltip(mat4 mat,vec3 vec){
+	return vec4(vec4(vec,0.0) * mat).xyz;
+	}
+
+
 void fragment(){
 
 	ALPHA = 0.0;
@@ -50,29 +147,86 @@ void fragment(){
 	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
 	view.xyz /= view.w;
 	float linear_depth = -view.z;
-	vec2 hit = ray_sphere(vec3(0.0,0.0,0.0),planet_radius,camera_pos,cam*vec4(view.xyz,0));
+	vec2 hit = ray_sphere(vec3(0.0,0.0,0.0),planet_radius,cam_pos,cam*vec4(view.xyz,0));
 	vec4 world = cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
   	vec3 world_position = world.xyz / world.w;
-	float oceanDepth = min(hit.y*0.1,length(world_position-cam_pos)-hit.x);
+	float oceanDepth = min(hit.y/10.0,length(-world_position+cam_pos)-hit.x);
+	
+	vec4 view_ = INV_PROJECTION_MATRIX * vec4(vec3(SCREEN_UV, 0.0), 1.0);
+	vec3 viewNormal = normalize(cam*vec4(view.xyz,0)).xyz;
+	vec3 onSpherePos = cam_pos + viewNormal * hit.x;
+	vec3 surface_normal = normalize(onSpherePos - planet_pos);
 	
 	if (oceanDepth > 0.0){
 		if (hit.x >= 0.0){
 		vec4 col = texture(gradient,vec2(1.0-exp(-oceanDepth*color_falloff),0));
 		ALBEDO = col.xyz;
 		ALPHA = 1.0-exp(-oceanDepth*alpha_falloff);
-		if (oceanDepth < 1.0 + sin(TIME)/2.0){
-			ALPHA = 0.9;
-			ALBEDO = vec3(1.0,1.0,1.0);
+		vec2 waveOffsetA = vec2(TIME * waveSpeed, TIME * waveSpeed * 0.8);
+		vec2 waveOffsetB = vec2(TIME * waveSpeed * - 0.8, TIME * waveSpeed * -0.3);
+		vec3 waveNormal = triplanarNormal(onSpherePos, surface_normal, specScale, waveOffsetA, noise);
+		//waveNormal = triplanarNormal(onSpherePos, waveNormal, specScale, waveOffsetB, noiseB);
+		waveNormal = normalize(surface_normal+waveNormal);
+		//waveNormal = normalize(mix(surface_normal, waveNormal, specbump));
+	
+		float specularAngle = acos(dot(normalize(light_normal - viewNormal), waveNormal));
+		float specularExponent = specularAngle / (1.0 - smoothness);
+		float specularHighlight = exp(-specularExponent * specularExponent);
+		vec3 foamtriplan = triplanar_texture(surface_normal*foamscale.x,surface_normal*foamscale.y,vec2(0.0,0.0),foamNoise).xyz;
+		if (oceanDepth < 1.0 + sin(TIME+foamtriplan.x*foamnoiseweight)/2.0){
+		if (length(cam_pos - planet_pos) > planet_radius){
+		ALPHA += 0.3;
+		ALBEDO = vec3(1.0,1.0,1.0);}
+		waveNormal = surface_normal;
 		}
-		
-		}
-	}
-	if (dot((cam*vec4(view.xyz,0.0)).xyz,-camera_pos) < 0.0){
-			if (length(camera_pos - planet_pos) > planet_radius)
+		ALBEDO *= dot(light_normal,waveNormal);
+		ALBEDO += specularHighlight*texture(specCol,vec2(1.0,0.0)).xyz;
+		}}
+	
+	if (dot((cam*vec4(view.xyz,0.0)).xyz,-cam_pos) < 0.0){
+			if (length(cam_pos - planet_pos) > planet_radius)
 			{
 			ALPHA = 0.0;
 			}
 		}
+
+
+	
+	//vec3 triplan = triplanar_texture(surface_normal*multiplyscalelo.x,surface_normal*multiplyscalelo.y,vec2(0.0,0.0),noise).xyz;
+	
+	
+	
+	/*
+	float bump =  bumpScale * dot(light_normal,normalize(surface_normal));
+	vec3 surfaceNormalMapped = normalize(surface_normal+triplan);
+	surfaceNormalMapped = normalize(lerp(surface_normal, waveNormal, waveStrength));
+	vec2 waveOffsetA = vec2(TIME * waveSpeed, TIME * waveSpeed * 0.8);
+	vec2 waveOffsetB = vec2(TIME * waveSpeed * - 0.8, TIME * waveSpeed * -0.3);
+	vec3 waveNormal = triplanarNormal(onSpherePos, surface_normal, specScale, waveOffsetA, noise);
+	waveNormal = triplanarNormal(onSpherePos, waveNormal, specScale, waveOffsetB, noiseB);
+	
+	waveNormal = normalize(mix(surface_normal, waveNormal, specbump));
+	
+	float specularAngle = acos(dot(normalize(light_normal - viewNormal), waveNormal));
+	float specularExponent = specularAngle / (1.0 - smoothness);
+	float specularHighlight = exp(-specularExponent * specularExponent);*/
+	
+	
+	//ALBEDO = vec3((dot(surface_normal,light_normal)+1.0)/2.0);
+	//ALBEDO = surface_normal;
+	
+
+	
+	//ALBEDO *= dot(light_normal,normalize(surface_normal + triplanar_texture(onSpherePos,surface_normal,vec2(0.0,0.0),noise).xyz));
+	//ALPHA = 1.0;
+	//ALBEDO = vec3(dot(light_normal,(cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0)).xyz));
+	//ALBEDO = (cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0)).xyz;
+	/*
+	if (texture(noise,surface_normal.xz*scale).r > 0.5){
+		ALBEDO = vec3(1.0,1.0,1.0);
+	}*/
+	
+
 	
 	
 
@@ -80,9 +234,12 @@ void fragment(){
 	
 }
 
+
+
+
 void vertex() {
 	cam = CAMERA_MATRIX;
-	camera_pos = (CAMERA_MATRIX * vec4(0.0,0.0,0.0,1.0)).xyz;
+	cam_pos = (CAMERA_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	POSITION = vec4(VERTEX, 1.0);
 }
 

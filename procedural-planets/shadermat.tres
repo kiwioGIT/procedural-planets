@@ -1,8 +1,6 @@
-[gd_resource type="ShaderMaterial" load_steps=10 format=2]
+[gd_resource type="ShaderMaterial" load_steps=12 format=2]
 
 [ext_resource path="res://shade.tres" type="Shader" id=1]
-[ext_resource path="res://maps/grass_normal.jpg" type="Texture" id=2]
-[ext_resource path="res://maps/combined.jpg" type="Texture" id=3]
 
 [sub_resource type="Gradient" id=7]
 offsets = PoolRealArray( 0.474286, 0.68 )
@@ -28,6 +26,21 @@ height = 2000
 seamless = true
 noise = SubResource( 5 )
 
+[sub_resource type="OpenSimplexNoise" id=9]
+
+[sub_resource type="NoiseTexture" id=10]
+as_normalmap = true
+bump_strength = 12.0
+noise = SubResource( 9 )
+
+[sub_resource type="OpenSimplexNoise" id=11]
+period = 34.3
+
+[sub_resource type="NoiseTexture" id=12]
+as_normalmap = true
+bump_strength = 11.9
+noise = SubResource( 11 )
+
 [resource]
 shader = ExtResource( 1 )
 shader_param/ocean_surface_height = 600
@@ -47,19 +60,19 @@ shader_param/mountainBlend = 94.535
 shader_param/secretMountainBlendValue = 0.429
 shader_param/rock_bump_strenght = 2.009
 shader_param/steep_power = 3.229
-shader_param/mulColor = 0.611
+shader_param/mulColor = 0.647
 shader_param/groundTextureScale = 0.024
 shader_param/groundTextureBias = -0.563
 shader_param/minBumpClamp = 0.01
 shader_param/maxBumpClamp = 0.909
 shader_param/smoothness = 0.97
-shader_param/light_normal = Vector3( 1, 0, 0 )
+shader_param/light_normal = Vector3( -1, 0, 0 )
 shader_param/scale = 0.195
 shader_param/blendSharpness = 0.0
 shader_param/rock_steep_bias = 0.308
 shader_param/rock_flat_barier = 2.612
-shader_param/noise_tex = ExtResource( 2 )
-shader_param/rock_tex = ExtResource( 3 )
+shader_param/noise_tex = SubResource( 10 )
+shader_param/rock_tex = SubResource( 12 )
 shader_param/beachColor = SubResource( 8 )
 shader_param/groundTexture = SubResource( 6 )
 shader_param/gradient = SubResource( 2 )

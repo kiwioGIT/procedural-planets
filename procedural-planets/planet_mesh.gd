@@ -103,7 +103,7 @@ func get_height(var pouc,planet_data : PlanetData,pass_check):
 	var mounmask = clamp(planet_data.mountain_mask.get_noise_3dv(pouc*100)+planet_data.mountain_mask_bias,-1,1)
 	var mountains =  1-abs(clamp(planet_data.noise_map.get_noise_3dv(pouc*100)*1.8,-1,1))
 	
-	mountains = mountains#*mountains#*mountains
+	mountains = pow(mountains,planet_data.mountains_power)
 	mounmask = (mounmask + 1)/2
 	mountains *= mounmask
 	
@@ -121,13 +121,9 @@ func get_height(var pouc,planet_data : PlanetData,pass_check):
 	var high_mountains_mask = clamp(planet_data.high_mountains_mask.get_noise_3dv(pouc*100)*8+planet_data.high_mountains_bias,0,1)
 	high_mountains = pow(high_mountains,planet_data.high_mountains_power) * (height-planet_data.ocean_surface) * high_mountains_mask
 	height += max(high_mountains*planet_data.high_mountains_elevation,0)
-	
-	
-	
+
 	#final smoothing
 	#var dist2oceansurface = height - planet_data.ocean_surface
-	
-	
 	#var smoothed = clamp(max(0,pow(dist2oceansurface/planet_data.beach_smoothing,2)),-1,1)
 	#height = dist2oceansurface*smoothed + planet_data.ocean_surface
 	

@@ -10,6 +10,7 @@ export var kontinent_noise2 : OpenSimplexNoise
 export var second_noise_layer : OpenSimplexNoise 
 export var sub_noise : OpenSimplexNoise
 
+
 export var mountain_mask : OpenSimplexNoise 
 export var high_mountains : OpenSimplexNoise
 export var ocean_mask : OpenSimplexNoise 
@@ -26,6 +27,7 @@ export var high_mountains_bias = 0.0
 
 export var ocean_surface = 600
 
+export var mountains_power = 1
 
 export var ocean_height = 50
 export var ocean_floor = 50
