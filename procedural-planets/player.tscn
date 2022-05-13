@@ -1,8 +1,6 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://player.gd" type="Script" id=1]
-[ext_resource path="res://depth.tscn" type="PackedScene" id=2]
-[ext_resource path="res://ocean_spat_mat.tres" type="Material" id=3]
 [ext_resource path="res://cam_origin.gd" type="Script" id=4]
 
 [sub_resource type="CapsuleShape" id=8]
@@ -94,10 +92,6 @@ current = true
 fov = 90.0
 near = 0.01
 far = 8375.3
-
-[node name="MeshInstance3" parent="X/Y/Z/pre_cam_origin/cam_origin/Camera" instance=ExtResource( 2 )]
-transform = Transform( 1, -1.42109e-14, -1.77636e-15, -4.17444e-14, 1, 4.47035e-08, 4.44089e-15, -7.45058e-08, 1, -6.48812e-06, -74.2153, -500.77 )
-material/0 = ExtResource( 3 )
 
 [node name="MeshInstance3" type="MeshInstance" parent="X/Y/Z/pre_cam_origin/cam_origin"]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, -4.41043 )

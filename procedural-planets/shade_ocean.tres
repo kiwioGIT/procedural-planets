@@ -3,7 +3,8 @@
 [resource]
 code = "shader_type spatial;
 
-render_mode unshaded;
+render_mode unshaded, depth_test_disable;
+
 
 uniform float waveSpeed;
 uniform vec2 specularOffsetA;
@@ -98,7 +99,7 @@ vec4 triplanar_texture(vec3 position, vec3 normal, vec2 offset, sampler2D noise_
 	vec4 colZ = texture(noise_, position.zy * scale + offset);
 	
 	vec3 blendWeight = abs(normal);
-	blendWeight = normalize(max(blendWeight, 0.00001)); // Force weights to sum to 1.0
+	blendWeight = normalize(max(blendWeight, 0.00001)); 
 	float b = (blendWeight.x + blendWeight.y + blendWeight.z);
 	blendWeight /= vec3(b, b, b);
 	return colX * blendWeight.x + colY * blendWeight.y + colZ * blendWeight.z;
@@ -189,42 +190,8 @@ void fragment(){
 			ALPHA = 0.0;
 			}
 		}
-
-
 	
-	//vec3 triplan = triplanar_texture(surface_normal*multiplyscalelo.x,surface_normal*multiplyscalelo.y,vec2(0.0,0.0),noise).xyz;
-	
-	
-	
-	/*
-	float bump =  bumpScale * dot(light_normal,normalize(surface_normal));
-	vec3 surfaceNormalMapped = normalize(surface_normal+triplan);
-	surfaceNormalMapped = normalize(lerp(surface_normal, waveNormal, waveStrength));
-	vec2 waveOffsetA = vec2(TIME * waveSpeed, TIME * waveSpeed * 0.8);
-	vec2 waveOffsetB = vec2(TIME * waveSpeed * - 0.8, TIME * waveSpeed * -0.3);
-	vec3 waveNormal = triplanarNormal(onSpherePos, surface_normal, specScale, waveOffsetA, noise);
-	waveNormal = triplanarNormal(onSpherePos, waveNormal, specScale, waveOffsetB, noiseB);
-	
-	waveNormal = normalize(mix(surface_normal, waveNormal, specbump));
-	
-	float specularAngle = acos(dot(normalize(light_normal - viewNormal), waveNormal));
-	float specularExponent = specularAngle / (1.0 - smoothness);
-	float specularHighlight = exp(-specularExponent * specularExponent);*/
-	
-	
-	//ALBEDO = vec3((dot(surface_normal,light_normal)+1.0)/2.0);
-	//ALBEDO = surface_normal;
-	
-
-	
-	//ALBEDO *= dot(light_normal,normalize(surface_normal + triplanar_texture(onSpherePos,surface_normal,vec2(0.0,0.0),noise).xyz));
-	//ALPHA = 1.0;
-	//ALBEDO = vec3(dot(light_normal,(cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0)).xyz));
-	//ALBEDO = (cam * INV_PROJECTION_MATRIX * vec4(ndc, 1.0)).xyz;
-	/*
-	if (texture(noise,surface_normal.xz*scale).r > 0.5){
-		ALBEDO = vec3(1.0,1.0,1.0);
-	}*/
+	//The atmosphere
 	
 
 	
@@ -240,7 +207,7 @@ void fragment(){
 void vertex() {
 	cam = CAMERA_MATRIX;
 	cam_pos = (CAMERA_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-	POSITION = vec4(VERTEX, 1.0);
+	//POSITION = vec4(VERTEX, 1.0);
 }
 
 
