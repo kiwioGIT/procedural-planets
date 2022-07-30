@@ -7,10 +7,14 @@ render_mode unshaded, depth_test_disable;
 
 uniform sampler2D atmos_grad;
 
+
 varying vec3 cam_pos;
 
+uniform int test_point_cascades = 3;
+uniform float atmosphere_thickness = 10;
 uniform sampler2D noiseB;
-
+uniform float atmosphere_density = 1;
+uniform float atmosphere_height = 200;
 uniform vec3 planet_pos = vec3(0.0,0.0,0.0);
 uniform float planet_radius = 600;
 uniform vec3 light_normal = vec3(1.0,0.0,0.0); 
@@ -122,6 +126,34 @@ vec3 matMulltip(mat4 mat,vec3 vec){
 	return vec4(vec4(vec,0.0) * mat).xyz;
 	}
 
+float get_density(vec3 point){
+	float dtp = length(point)-planet_radius;//sqrt(pow(point.x-planet_pos.x,2)+pow(point.y-planet_pos.y,2)+pow(point.y-planet_pos.y,2));
+	float density = atmosphere_density/(dtp*dtp);
+	return density;
+}
+float get_avarage_density(vec3 point,vec3 point2){
+	float dens = 0.0;//get_density(mix(point,point2,0.5));
+	for (int i = 1;i < test_point_cascades;i++){
+		dens += get_density(mix(point,point2,float(i)/float(test_point_cascades)));
+	}
+	dens /= float(test_point_cascades);
+	return dens;
+}
+
+float get_in_scaterr_light(vec3 point,vec3 point2){
+	float fl = 0.0;
+	for (int i = 1;i < test_point_cascades;i++){
+		vec3 p = mix(point,point2,float(i)/float(test_point_cascades));
+		vec2 light_hit = ray_sphere(planet_pos,planet_radius+atmosphere_height,p,vec4(light_normal,0));
+		vec3 light_hit_pos = p + (light_normal*light_hit.y);
+		float dens = get_avarage_density(p,light_hit_pos)*length(point-point2);
+		
+		float add = atmosphere_thickness/dens;
+		fl += add*pow(max(0,get_density(p)),1);
+	}
+	fl /= float(test_point_cascades);
+	return fl;
+}
 
 void fragment(){
 
@@ -137,21 +169,37 @@ void fragment(){
 	vec4 view_ = INV_PROJECTION_MATRIX * vec4(vec3(SCREEN_UV, 0.0), 1.0);
 	vec3 viewNormal = normalize(cam*vec4(view.xyz,0)).xyz;
 	
-	vec2 hit_atmo = ray_sphere(vec3(0.0,0.0,0.0),planet_radius+200.0,cam_pos,cam*vec4(view.xyz,0));
+	vec2 hit_atmo = ray_sphere(vec3(0.0,0.0,0.0),planet_radius+atmosphere_height,cam_pos,cam*vec4(view.xyz,0));
 	vec2 hit_ocean = ray_sphere(vec3(0.0,0.0,0.0),planet_radius,cam_pos,cam*vec4(view.xyz,0));
-	float dist_trough_atmosphere = min(hit_atmo.y,length(-world_position+cam_pos)-hit_atmo.x);
+	float dist_trough_atmosphere = abs(min(hit_atmo.y,length(world_position+cam_pos)-hit_atmo.x));
 	if (hit_ocean.y > 0.0){
-		dist_trough_atmosphere = min(dist_trough_atmosphere,hit_ocean.x - hit_atmo.x);
+		//dist_trough_atmosphere = min(dist_trough_atmosphere,hit_ocean.x - hit_atmo.x);
 	}
+	
 	vec3 on_atmo_pos = cam_pos + viewNormal * hit_atmo.x;
+	vec3 far_hit = cam_pos + viewNormal * (dist_trough_atmosphere + hit_atmo.x);
+	
 	vec3 atmo_surface_normal = normalize(on_atmo_pos - planet_pos);
-	if (dist_trough_atmosphere > 0.0){
-		ALPHA = pow(dist_trough_atmosphere*0.05,1.8)*0.0003*min(1.0,dot(atmo_surface_normal,light_normal)*0.7+0.3) * 1.0;
+	float particles_trough_atmosphere = dist_trough_atmosphere * 0.0000002 *dist_trough_atmosphere;//get_avarage_density(on_atmo_pos,far_hit) * 100000.0;//get_avarage_density(on_atmo_pos,far_hit) * dist_trough_atmosphere * 0.001 * min(1,dot(light_normal,atmo_surface_normal)+0.3);//get_in_scaterr_light(on_atmo_pos,far_hit) * dist_trough_atmosphere*dot(light_normal,atmo_surface_normal);
+	
+	if (particles_trough_atmosphere > 0.0){
+		//ALBEDO = vec3(1.0);
+		//ALPHA = 1.0;
+		ALPHA = particles_trough_atmosphere;
 		ALBEDO = texture(atmos_grad,vec2(dot(atmo_surface_normal,light_normal),0.0)).xyz;
 	}
 	
+	/*if (dist_trough_atmosphere > 0.0){
+		ALPHA = pow(dist_trough_atmosphere*0.05,1.8)*0.0003*min(1.0,dot(atmo_surface_normal,light_normal)*0.7+0.3) * 1.0;
+		ALBEDO = texture(atmos_grad,vec2(dot(atmo_surface_normal,light_normal),0.0)).xyz;
+	}*/
+	
+	
+
+	
 	
 }
+
 
 
 

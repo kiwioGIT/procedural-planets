@@ -18,6 +18,10 @@ noise = SubResource( 13 )
 
 [resource]
 shader = ExtResource( 1 )
+shader_param/test_point_cascades = -174
+shader_param/atmosphere_thickness = 10.32
+shader_param/atmosphere_density = 0.424
+shader_param/atmosphere_height = 200.0
 shader_param/planet_pos = Vector3( 0, 0, 0 )
 shader_param/planet_radius = 1200.0
 shader_param/light_normal = Vector3( 1, 0, 0 )
