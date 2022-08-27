@@ -1,66 +1,6 @@
-[gd_resource type="ShaderMaterial" load_steps=12 format=2]
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
 
 [ext_resource path="res://shade_ocean.tres" type="Shader" id=1]
 
-[sub_resource type="OpenSimplexNoise" id=6]
-octaves = 2
-
-[sub_resource type="NoiseTexture" id=5]
-noise = SubResource( 6 )
-
-[sub_resource type="Gradient" id=1]
-colors = PoolColorArray( 0.0883026, 0.229342, 0.313965, 1, 0.0107422, 0, 0.0859375, 1 )
-
-[sub_resource type="GradientTexture" id=2]
-gradient = SubResource( 1 )
-
-[sub_resource type="OpenSimplexNoise" id=11]
-
-[sub_resource type="NoiseTexture" id=12]
-width = 1000
-height = 1000
-as_normalmap = true
-bump_strength = 27.2
-noise = SubResource( 11 )
-
-[sub_resource type="OpenSimplexNoise" id=13]
-
-[sub_resource type="NoiseTexture" id=14]
-as_normalmap = true
-bump_strength = 23.5
-noise = SubResource( 13 )
-
-[sub_resource type="Gradient" id=9]
-offsets = PoolRealArray( 0 )
-colors = PoolColorArray( 1, 0.934021, 0.820313, 1 )
-
-[sub_resource type="GradientTexture" id=10]
-gradient = SubResource( 9 )
-width = 1
-
 [resource]
 shader = ExtResource( 1 )
-shader_param/waveSpeed = 0.008
-shader_param/specularOffsetA = null
-shader_param/specularOffsetB = null
-shader_param/specbump = 1.668
-shader_param/specScale = 0.01
-shader_param/alpha_falloff = 0.132
-shader_param/color_falloff = 0.019
-shader_param/planet_pos = Vector3( 0, 0, 0 )
-shader_param/planet_radius = 1200.0
-shader_param/light_normal = Vector3( 1, 0, 0 )
-shader_param/multiplyscalelo = Vector2( 1, 1 )
-shader_param/foamscale = Vector2( 1, 1 )
-shader_param/foamnoiseweight = 19.281
-shader_param/scale = 0.606
-shader_param/inTexScale = 1.07
-shader_param/bumpScale = 1.4
-shader_param/specularmul = 1.153
-shader_param/specularsub = 0.867
-shader_param/smoothness = 0.927
-shader_param/gradient = SubResource( 2 )
-shader_param/noise = SubResource( 12 )
-shader_param/specCol = SubResource( 10 )
-shader_param/noiseB = SubResource( 14 )
-shader_param/foamNoise = SubResource( 5 )

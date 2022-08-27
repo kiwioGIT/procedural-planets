@@ -36,7 +36,7 @@ func regenerate_mesh(planet_data : PlanetData):
 			var percent = Vector2(x,y)/(resolution-1) 
 			#var pouc = normal + (percent.x-0.5) * 2 * Axis + (percent.y-0.5) * 2 * Bxis
 			var pouc = normal - Axis - Bxis + (Axis*x*2/(resolution-1)) + (Bxis*y*2/(resolution-1))
-			vertex_array[i] = pouc.normalized() * get_height(pouc,planet_data,false)
+			vertex_array[i] = pouc.normalized() * get_height_remake(pouc,planet_data,false)
 			if x != resolution-1 and y != resolution-1:
 				index_array[tri_index] = i+resolution
 				index_array[tri_index+1] = i+resolution+1
@@ -76,9 +76,9 @@ func _update_mesh(arrays,planet_data : PlanetData):
 	var _mesh = ArrayMesh.new()
 	_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 	var mat = get_surface_material(0)
-	mat.set_shader_param("elevation",planet_data.elevation)
-	mat.set_shader_param("elevation2",planet_data.elevation2)
-	mat.set_shader_param("ocean_surface_height",planet_data.ocean_surface)
+	#mat.set_shader_param("elevation",planet_data.elevation1)
+	#mat.set_shader_param("elevation2",planet_data.elevation2)
+	#mat.set_shader_param("ocean_surface_height",planet_data.ocean_surface)
 	_mesh.surface_set_material(0,mat)
 	
 	mesh = _mesh
@@ -129,6 +129,76 @@ func get_height(var pouc,planet_data : PlanetData,pass_check):
 	
 
 	return height
+
+func scalmp_( f, sc):
+	return clamp(((f-0.5)*sc)+0.5,0.0,1.0)
+
+
+func get_height_remake(pouc,planet_data : PlanetData,pass_check):
+	var height = 0
+	#height += planet_data.elevation1
+	#height += pow(-smin((-planet_data.mask1.get_noise_3dv(pouc*100)-1)/2,0,0.1),3) * planet_data.elevation2 * ridgidNoise(pouc*100,[planet_data.layers,planet_data.persistence,planet_data.lacunarity,planet_data.scale_,planet_data.multiplier,planet_data.power,planet_data.gain,planet_data.verticalShift])
+	var continent = planet_data.noise_map1.get_noise_3dv(pouc * 100)
+	
+	var ocean = -planet_data.ocean_floor + continent * 0.15
+	continent = smin(continent,ocean,-0.2)
+	if continent < 0:
+		continent *= planet_data.elevation5
+	
+	var mountains_mask = (planet_data.noise_map2.get_noise_3dv(pouc*100)+1)/2
+	var mountains = ridgidNoise(pouc * 100,[planet_data.layers,planet_data.persistence,planet_data.lacunarity,planet_data.scale_,planet_data.multiplier,planet_data.power,planet_data.gain,planet_data.verticalShift]) * mountains_mask
+	
+	height = continent + mountains + planet_data.elevation1
+	
+	return height
+
+
+func ridgidNoise(pos,params):
+	#Extract parameters for readability
+	var offset = Vector3(0,0,0)
+	var numLayers = int(params[0]);
+	var persistence = params[1];
+	var lacunarity = params[2];
+	var scale_ = params[3];
+	var multiplier = params[4];
+	var power = params[5];
+	var gain = params[6];
+	var verticalShift = params[7];
+
+	# Sum up noise layers
+	var noiseSum = 0;
+	var amplitude = 1;
+	var frequency = scale;
+	var ridgeWeight = 1;
+
+	for i in range(numLayers):
+		var nos = OpenSimplexNoise.new()
+		nos.octaves = 1
+		var noiseVal = 1 - abs(nos.get_noise_3dv(pos * frequency + offset));
+		noiseVal = pow(abs(noiseVal), power);
+		noiseVal *= ridgeWeight;
+		ridgeWeight = clamp(noiseVal * gain,0,1);
+
+		noiseSum += noiseVal * amplitude;
+		amplitude *= persistence;
+		frequency *= lacunarity;
+	return noiseSum * multiplier + verticalShift;
+
+
+# Sample the noise several times at small offsets from the centre and average the result
+# This reduces some of the harsh jaggedness that can occur
+func smoothedRidgidNoise(pos,params):
+	var sphereNormal = pos.normalized();
+	var axisA = sphereNormal.cross(Vector3(0,1,0));
+	var axisB = sphereNormal.cross(axisA);
+
+	var offsetDst = 1 * 0.01;
+	var sample0 = ridgidNoise(pos, params);
+	var sample1 = ridgidNoise(pos - axisA * offsetDst, params);
+	var sample2 = ridgidNoise(pos + axisA * offsetDst, params);
+	var sample3 = ridgidNoise(pos - axisB * offsetDst, params);
+	var sample4 = ridgidNoise(pos + axisB * offsetDst, params);
+	return (sample0 + sample1 + sample2 + sample3 + sample4) / 5;
 
 
 func smin(var a, var b, var k):

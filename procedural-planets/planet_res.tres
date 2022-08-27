@@ -1,136 +1,49 @@
-[gd_resource type="Resource" load_steps=23 format=2]
+[gd_resource type="Resource" load_steps=7 format=2]
 
 [ext_resource path="res://planet_data.gd" type="Script" id=1]
-[ext_resource path="res://planet_noises/nicoe.tres" type="OpenSimplexNoise" id=4]
-[ext_resource path="res://shade.tres" type="Shader" id=5]
-[ext_resource path="res://planet_noises/layer_2.tres" type="OpenSimplexNoise" id=6]
-[ext_resource path="res://planet_noises/sub_noise.tres" type="OpenSimplexNoise" id=7]
-[ext_resource path="res://planet_noises/mountain_mask.tres" type="OpenSimplexNoise" id=8]
-[ext_resource path="res://planet_noises/ocean_mask.tres" type="OpenSimplexNoise" id=9]
+[ext_resource path="res://shadermat.tres" type="Material" id=2]
 
-[sub_resource type="OpenSimplexNoise" id=14]
-octaves = 4
-period = 28.4
+[sub_resource type="OpenSimplexNoise" id=1]
+octaves = 1
+period = 79.7
 
-[sub_resource type="OpenSimplexNoise" id=15]
-seed = 3
-
-[sub_resource type="OpenSimplexNoise" id=16]
-seed = 5
+[sub_resource type="OpenSimplexNoise" id=3]
 octaves = 6
-lacunarity = 1.4
+period = 83.2
 
-[sub_resource type="OpenSimplexNoise" id=17]
-seed = -7
-octaves = 2
-lacunarity = 1.4
+[sub_resource type="OpenSimplexNoise" id=2]
 
-[sub_resource type="Gradient" id=7]
-offsets = PoolRealArray( 0.474286, 0.68 )
-colors = PoolColorArray( 0.116699, 0.0994377, 0.08251, 1, 0.644531, 0.630074, 0.274429, 1 )
-
-[sub_resource type="GradientTexture" id=8]
-gradient = SubResource( 7 )
-
-[sub_resource type="Gradient" id=9]
-offsets = PoolRealArray( 0.0228571, 0.48, 0.605714, 0.697143, 0.810651, 0.852071 )
-colors = PoolColorArray( 0.224121, 0.224121, 0.224121, 1, 0.208534, 0.208534, 0.208534, 1, 0.20459, 0.20459, 0.20459, 1, 0.290196, 0.192157, 0.129412, 1, 0.298828, 0.186369, 0.114395, 1, 0.0518847, 0.817383, 0, 1 )
-
-[sub_resource type="GradientTexture" id=10]
-gradient = SubResource( 9 )
-
-[sub_resource type="OpenSimplexNoise" id=5]
-seed = -6
-octaves = 5
-
-[sub_resource type="NoiseTexture" id=6]
-width = 2000
-height = 2000
-seamless = true
-noise = SubResource( 5 )
-
-[sub_resource type="OpenSimplexNoise" id=18]
-
-[sub_resource type="NoiseTexture" id=19]
-width = 800
-height = 800
-as_normalmap = true
-bump_strength = 14.1
-noise = SubResource( 18 )
-
-[sub_resource type="OpenSimplexNoise" id=20]
-
-[sub_resource type="NoiseTexture" id=21]
-width = 800
-height = 800
-as_normalmap = true
-noise = SubResource( 20 )
-
-[sub_resource type="ShaderMaterial" id=13]
-shader = ExtResource( 5 )
-shader_param/ocean_surface_height = 1200
-shader_param/elevation = 1200
-shader_param/elevation2 = 60
-shader_param/rock_scale = 0.164
-shader_param/colorMixBias = 0.166
-shader_param/beach = 3.754
-shader_param/beachSteepness = 0.591
-shader_param/beachBlend = 0.166
-shader_param/sclampVal = 1.226
-shader_param/blendColor = Vector3( 0, 0.128, 0 )
-shader_param/mountain_height = 14.518
-shader_param/mountainColor = Color( 1, 1, 1, 1 )
-shader_param/mountainSteepness = 1.411
-shader_param/mountainBlend = 90.156
-shader_param/secretMountainBlendValue = 0.335
-shader_param/rock_bump_strenght = 2.009
-shader_param/steep_power = 3.387
-shader_param/mulColor = 0.928
-shader_param/groundTextureScale = 0.024
-shader_param/groundTextureBias = -0.563
-shader_param/minBumpClamp = 0.01
-shader_param/maxBumpClamp = 0.909
-shader_param/smoothness = 0.835
-shader_param/light_normal = Vector3( 1, 0, 0 )
-shader_param/scale = 0.292
-shader_param/blendSharpness = 0.0
-shader_param/rock_steep_bias = 0.326
-shader_param/rock_flat_barier = 2.246
-shader_param/noise_tex = SubResource( 19 )
-shader_param/rock_tex = SubResource( 21 )
-shader_param/beachColor = SubResource( 8 )
-shader_param/groundTexture = SubResource( 6 )
-shader_param/gradient = SubResource( 10 )
+[sub_resource type="OpenSimplexNoise" id=4]
+period = 86.4
 
 [resource]
 script = ExtResource( 1 )
-smin_kontinents = false
-noise_map = ExtResource( 4 )
-kontinent_noise = SubResource( 16 )
-kontinent_noise2 = SubResource( 17 )
-second_noise_layer = ExtResource( 6 )
-sub_noise = ExtResource( 7 )
-mountain_mask = ExtResource( 8 )
-high_mountains = SubResource( 14 )
-ocean_mask = ExtResource( 9 )
-high_mountains_mask = SubResource( 15 )
-ocean_mask_bias = 0.5
-mountain_mask_bias = 0.0
-kontinent_border_exponent = 2
-kontinent_border = 10.0
-kontinent_bias = 0.2
-high_mountains_bias = -0.5
+layers = 3
+noise_map1 = SubResource( 3 )
+noise_map2 = SubResource( 2 )
+noise_map5 = SubResource( 4 )
+mask1 = SubResource( 1 )
+mountain_blend = 1.0
+bias1 = 0.0
+bias2 = 0.0
+persistence = 0.5
+lacunarity = 4.0
+scale_ = 1.348
+multiplier = 190.0
+power = 2.2
+gain = 1.0
+verticalShift = 0.0
 ocean_surface = 1200
 mountains_power = 1
-ocean_height = 500
-ocean_floor = 50
-elevation = 1200
-elevation2 = 60
-elevation3 = 1
+elevation1 = 1170
+elevation2 = 2
+elevation3 = 200
 elevation4 = 0
-high_mountains_elevation = 10
-kontinent_elevation = 50
+elevation5 = 499
+elevation6 = 0
+ocean_height = 500
+ocean_floor = 1
 high_mountains_power = 2
 beach_smoothing = 5.0
-shader_mat = SubResource( 13 )
+shader_mat = ExtResource( 2 )
 stupid_lookup_value = 8.0

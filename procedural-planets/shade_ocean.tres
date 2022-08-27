@@ -184,12 +184,14 @@ void fragment(){
 		ALBEDO += specularHighlight*texture(specCol,vec2(1.0,0.0)).xyz;
 		}}
 	
+	
 	if (dot((cam*vec4(view.xyz,0.0)).xyz,-cam_pos) < 0.0){
 			if (length(cam_pos - planet_pos) > planet_radius)
 			{
 			ALPHA = 0.0;
 			}
 		}
+	
 	
 	//The atmosphere
 	

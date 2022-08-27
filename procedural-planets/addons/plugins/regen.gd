@@ -6,6 +6,8 @@ var regen_button_
 var spawn_trees_button_
 var restart_shader_button_
 
+var shader_button_
+
 func handles(object):
 	return object.is_in_group("planet")
 
@@ -26,7 +28,11 @@ func show_button():
 	regen_button_.connect("pressed",self,"regen_planet",[editing_object_])
 	add_control_to_container(EditorPlugin.CONTAINER_SPATIAL_EDITOR_MENU,regen_button_)
 	
-
+	shader_button_ = Button.new()
+	shader_button_.text = "reset_shader"
+	shader_button_.connect("pressed",self,"reset_shader",[editing_object_])
+	add_control_to_container(EditorPlugin.CONTAINER_SPATIAL_EDITOR_MENU,shader_button_)
+	
 	spawn_trees_button_ = Button.new()
 	spawn_trees_button_.text = "spawn_trees"
 	spawn_trees_button_.connect("pressed",self,"spawn_trees",[editing_object_])
@@ -39,12 +45,20 @@ func hide_button():
 		remove_control_from_container(EditorPlugin.CONTAINER_SPATIAL_EDITOR_MENU,regen_button_)
 		regen_button_.queue_free()
 		regen_button_ = null
-		
+	
+	if shader_button_:
+		remove_control_from_container(EditorPlugin.CONTAINER_SPATIAL_EDITOR_MENU,shader_button_)
+		shader_button_.queue_free()
+		shader_button_ = null
+	
 	if spawn_trees_button_:
 		remove_control_from_container(EditorPlugin.CONTAINER_SPATIAL_EDITOR_MENU,spawn_trees_button_)
 		spawn_trees_button_.queue_free()
 		spawn_trees_button_ = null
 
+
+func reset_shader(obj):
+	obj.update_material()
 
 func regen_planet(object):
 	object.generate()

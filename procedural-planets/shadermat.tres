@@ -1,78 +1,108 @@
-[gd_resource type="ShaderMaterial" load_steps=12 format=2]
+[gd_resource type="ShaderMaterial" load_steps=17 format=2]
 
 [ext_resource path="res://shade.tres" type="Shader" id=1]
+[ext_resource path="res://icon.png" type="Texture" id=2]
 
 [sub_resource type="Gradient" id=7]
 offsets = PoolRealArray( 0.474286, 0.68 )
-colors = PoolColorArray( 0.116699, 0.0994377, 0.08251, 1, 0.644531, 0.630074, 0.274429, 1 )
+colors = PoolColorArray( 0.116699, 0.0994377, 0.08251, 1, 1, 0, 0, 1 )
 
 [sub_resource type="GradientTexture" id=8]
 gradient = SubResource( 7 )
 
 [sub_resource type="Gradient" id=1]
-offsets = PoolRealArray( 0.0228571, 0.48, 0.605714, 0.697143, 0.810651, 0.852071 )
-colors = PoolColorArray( 0.224121, 0.224121, 0.224121, 1, 0.208534, 0.208534, 0.208534, 1, 0.20459, 0.20459, 0.20459, 1, 0.290196, 0.192157, 0.129412, 1, 0.298828, 0.186369, 0.114395, 1, 0.0518847, 0.817383, 0, 1 )
+offsets = PoolRealArray( 0.0116959, 0.472119, 0.572491, 0.743494, 0.795539, 0.918216, 1 )
+colors = PoolColorArray( 0.375, 0.375, 0.375, 1, 0.377396, 0.369306, 0.358766, 1, 0.427942, 0.249172, 0.0162338, 1, 0.430338, 0.243478, 0, 1, 0.276013, 0.515196, 0, 1, 0.261214, 0.541251, 0, 1, 0.589834, 0.797363, 0.336388, 1 )
 
 [sub_resource type="GradientTexture" id=2]
 gradient = SubResource( 1 )
 
-[sub_resource type="OpenSimplexNoise" id=5]
-seed = -6
-octaves = 5
+[sub_resource type="Gradient" id=14]
+offsets = PoolRealArray( 0.356877, 0.379182, 0.434944, 0.486989, 0.66171, 0.70632 )
+colors = PoolColorArray( 0.859667, 0.895522, 0, 1, 0.281614, 0.718817, 0.15436, 1, 0.199933, 0.693848, 0.176172, 1, 0.334473, 0.206204, 0.0352764, 1, 0.27002, 0.181843, 0.0643406, 1, 1, 1, 1, 1 )
 
-[sub_resource type="NoiseTexture" id=6]
+[sub_resource type="GradientTexture" id=15]
+gradient = SubResource( 14 )
+
+[sub_resource type="OpenSimplexNoise" id=16]
+period = 0.1
+
+[sub_resource type="NoiseTexture" id=17]
 width = 2000
 height = 2000
 seamless = true
-noise = SubResource( 5 )
+noise = SubResource( 16 )
 
-[sub_resource type="OpenSimplexNoise" id=9]
+[sub_resource type="OpenSimplexNoise" id=18]
+octaves = 5
+period = 16.2
+persistence = 0.706
 
-[sub_resource type="NoiseTexture" id=10]
+[sub_resource type="NoiseTexture" id=19]
+width = 3000
+height = 3000
+seamless = true
 as_normalmap = true
-bump_strength = 12.0
-noise = SubResource( 9 )
+bump_strength = 32.0
+noise = SubResource( 18 )
+
+[sub_resource type="OpenSimplexNoise" id=20]
+
+[sub_resource type="NoiseTexture" id=21]
+width = 3000
+height = 3000
+seamless = true
+as_normalmap = true
+bump_strength = 32.0
+noise = SubResource( 20 )
 
 [sub_resource type="OpenSimplexNoise" id=11]
 period = 34.3
 
 [sub_resource type="NoiseTexture" id=12]
+seamless = true
 as_normalmap = true
 bump_strength = 11.9
 noise = SubResource( 11 )
 
 [resource]
 shader = ExtResource( 1 )
-shader_param/ocean_surface_height = 600
-shader_param/elevation = 605
-shader_param/elevation2 = 50
+shader_param/ocean_surface_height = 600.0
+shader_param/elevation = 1200.0
+shader_param/elevation2 = 2
 shader_param/rock_scale = 0.164
+shader_param/ground_texture_strenght = 0.0
+shader_param/height_steep_ration = 1.162
 shader_param/colorMixBias = 0.166
 shader_param/beach = 2.893
-shader_param/beachSteepness = 0.591
+shader_param/beachSteepness = 0.723
 shader_param/beachBlend = 0.166
-shader_param/sclampVal = 1.226
-shader_param/blendColor = Vector3( 0, 0.1, 0 )
-shader_param/mountain_height = 14.518
+shader_param/sclampVal = 1.229
+shader_param/blendColor = Vector3( 0, 0, 0 )
+shader_param/mountain_height = 90.0
 shader_param/mountainColor = Color( 1, 1, 1, 1 )
-shader_param/mountainSteepness = 1.609
-shader_param/mountainBlend = 94.535
+shader_param/mountainSteepness = 1.0
+shader_param/mountainBlend = 1000.0
 shader_param/secretMountainBlendValue = 0.429
 shader_param/rock_bump_strenght = 2.009
 shader_param/steep_power = 3.229
-shader_param/mulColor = 0.647
-shader_param/groundTextureScale = 0.024
-shader_param/groundTextureBias = -0.563
-shader_param/minBumpClamp = 0.01
-shader_param/maxBumpClamp = 0.909
-shader_param/smoothness = 0.97
+shader_param/mulColor = 1.0
+shader_param/groundTextureScale = 0.001
+shader_param/groundTextureBias = 0.0
+shader_param/minBumpClamp = 0.0
+shader_param/maxBumpClamp = 1.0
+shader_param/smoothness = 1.0
 shader_param/light_normal = Vector3( 1, 0, 0 )
-shader_param/scale = 0.195
+shader_param/scale = 0.013
+shader_param/scale2 = 0.008
 shader_param/blendSharpness = 0.0
 shader_param/rock_steep_bias = 0.308
 shader_param/rock_flat_barier = 2.612
-shader_param/noise_tex = SubResource( 10 )
+shader_param/noise_tex = SubResource( 19 )
+shader_param/noise_tex2 = SubResource( 21 )
 shader_param/rock_tex = SubResource( 12 )
 shader_param/beachColor = SubResource( 8 )
-shader_param/groundTexture = SubResource( 6 )
+shader_param/groundTexture = ExtResource( 2 )
+shader_param/height_steep_ratio_texture = SubResource( 17 )
 shader_param/gradient = SubResource( 2 )
+shader_param/gradient2 = SubResource( 15 )

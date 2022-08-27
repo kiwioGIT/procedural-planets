@@ -10,6 +10,7 @@ varying float steepnes;
 uniform float elevation;
 uniform float elevation2;
 uniform sampler2D noise_tex;
+uniform sampler2D noise_tex2;
 
 uniform sampler2D rock_tex;/*
 uniform sampler2D rock_tex2;
@@ -17,6 +18,10 @@ uniform sampler2D rock_tex3;
 uniform sampler2D rock_tex4;*/
 
 uniform float rock_scale;
+
+uniform float ground_texture_strenght = 1.0;
+
+uniform float height_steep_ration = 0.5;
 
 uniform float colorMixBias;
 uniform float beach;
@@ -41,6 +46,8 @@ uniform sampler2D groundTexture;
 uniform float groundTextureScale;
 uniform float groundTextureBias;
 
+uniform sampler2D height_steep_ratio_texture;
+
 uniform float minBumpClamp = 0.0;
 uniform float maxBumpClamp = 1.0;
 
@@ -49,6 +56,7 @@ uniform float smoothness = 1.0;
 uniform vec3 light_normal = vec3(1.0,0.0,0.0);
 
 uniform float scale : hint_range(0,2) = 1.0;
+uniform float scale2 : hint_range(0,2) = 1.0;
 uniform float blendSharpness : hint_range(0,2) = 0.0;
 
 uniform float rock_steep_bias;
@@ -59,6 +67,7 @@ varying vec3 vert;
 
 
 uniform sampler2D gradient: hint_black;
+uniform sampler2D gradient2: hint_black;
 
 vec3 blend_rnm(vec3 n1, vec3 n2)
 {
@@ -142,7 +151,7 @@ void vertex()
 		vert = VERTEX;
 		steepnes = dot(NORMAL,VERTEX);
 		
-		height = length((vec4(vert,0)*WORLD_MATRIX).xyz) - ocean_surface_height;
+		height = length(VERTEX) - ocean_surface_height;
 		
 	}
 
@@ -150,40 +159,52 @@ float scalmp(float f,float sc){
 	return clamp(((f-0.5)*sc)+0.5,0.0,1.0);
 }
 
+
+
 void fragment()
 {
-	float trip = 1.0;//triplanar_texture(vert,nor,vec2(0.0,0.0),noise_tex).x + colorMixBias;
-	//ALBEDO = vec3(height,0.0,0.0); texture(gradient,vec2(dot(normalize(vert),nor),0)).rgb *
 	float steep = dot(normalize(vert),normalize(nor));
-	vec3 col = texture(gradient,vec2(steep,0)).rgb;
+	float hss = scalmp(height_steep_ration*0.01+triplanar_texture(vert,nor,vec2(0.0),0.000002,height_steep_ratio_texture).x,60.0);
+	vec3 col = mix(texture(gradient,vec2(steep,0)).rgb,texture(gradient2,vec2((height-500.0)/300.0,0)).rgb,hss);
 	
-	
-	col = mulColor*mix(col,blendColor,clamp(triplanar_texture(vert,nor,vec2(0.0),groundTextureScale,groundTexture).x+groundTextureBias,0.0,1.0));
-	//ALBEDO = col*trip;
-	//ALBEDO = mix(col,blendColor,scalmp(trip,sclampVal));
-	vec3 bump = triplanarNormal(vert,nor,vec3(scale),vec2(0.0),noise_tex);
-	
-	vec3 rock_bump = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex);
-	/*vec3 rock_bump2 = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex2);
-	vec3 rock_bump3 = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex3);
-	vec3 rock_bump4 = triplanarNormal(vert,nor,vec3(rock_scale),vec2(0.0),rock_tex4);*/
-	
-	/*vec3 rbum  = (rock_bump+rock_bump2+rock_bump3+rock_bump4)/vec3(4.0);*/
-	
-	bump = mix(rock_bump*rock_bump_strenght,bump,clamp(pow(steep+rock_steep_bias,steep_power),0.0,1.0));
-	
-	ALBEDO = col*max(dot(mix(nor,bump,smoothness),light_normal),0);
-	//ALBEDO = triplanar_texture(vert,nor,vec2(0.0),noise_tex).xyz;
-	
+	//col = mix(col,triplanar_texture(vert,nor,vec2(0.0),))
+	col = mix(col,col*triplanar_texture(vert,nor,vec2(0.0),groundTextureScale,groundTexture).xyz,steep*ground_texture_strenght);
+	//col = mulColor*mix(col,mix(col,blendColor,ground_texture_strenght),clamp(triplanar_texture(vert,nor,vec2(0.0),groundTextureScale,groundTexture).y+groundTextureBias,0.0,1.0));
 
-	ALBEDO = mix(texture(beachColor,vec2(steep*beachSteepness,0)).xyz,ALBEDO,clamp(height*(1.0/steep)*beachBlend,0.0,1.0));
+	/*vec3 rbum  = (rock_bump+rock_bump2+rock_bump3+rock_bump4)/vec3(4.0);*/
+	//bump = mix(rock_bump*rock_bump_strenght,bump,clamp(pow(steep+rock_steep_bias,steep_power),0.0,1.0));
+	vec3 bump_pre = triplanarNormal(vert,nor,vec3(scale2),vec2(0.0),noise_tex2);
+	vec3 bump = triplanarNormal(vert,nor,vec3(scale),vec2(0.0),noise_tex);
+	bump = mix(bump_pre,bump,0.2);
+	ALBEDO = col * max(dot(mix(nor,bump,smoothness),nor),0);
+	//ALBEDO = triplanar_texture(vert,nor,vec2(0.0),noise_tex).xyz
+
+	//ALBEDO = mix(texture(beachColor,vec2(steep*beachSteepness,0)).xyz,ALBEDO,clamp(height*(1.0/steep)*beachBlend,0.0,1.0));
 	if (height > mountain_height && steep < mountainSteepness){
-		ALBEDO = mix(mountainColor.xyz,ALBEDO,clamp((secretMountainBlendValue*steep/height)*mountainBlend,0.0,1.0));
+		//ALBEDO = mix(mountainColor.xyz,ALBEDO,clamp((secretMountainBlendValue*steep/height)*mountainBlend,0.0,1.0));
 	}
 	
-	
-	//ALBEDO = vec3(nor.x,nor.y,nor.z);
 }
 
-void light(){
+void lightss(){
+	//float steep = dot(normalize(vert),normalize(nor));
+	//float hss = scalmp(height_steep_ration*0.01+triplanar_texture(vert,nor,vec2(0.0),0.000002,height_steep_ratio_texture).x,10.0);
+	//vec3 col = mix(texture(gradient,vec2(steep,0)).rgb,texture(gradient2,vec2(height/1000.0,0)).rgb,hss);
+
+	//col = mix(col,col*triplanar_texture(vert,nor,vec2(0.0),groundTextureScale,groundTexture).xyz,steep*ground_texture_strenght);
+	//col = mulColor*mix(col,mix(col,blendColor,ground_texture_strenght),clamp(triplanar_texture(vert,nor,vec2(0.0),groundTextureScale,groundTexture).y+groundTextureBias,0.0,1.0));
+
+	/*vec3 rbum  = (rock_bump+rock_bump2+rock_bump3+rock_bump4)/vec3(4.0);*/
+	//bump = mix(rock_bump*rock_bump_strenght,bump,clamp(pow(steep+rock_steep_bias,steep_power),0.0,1.0));
+	
+	
+	//ALBEDO = triplanar_texture(vert,nor,vec2(0.0),noise_tex).xyz
+
+	//ALBEDO = mix(texture(beachColor,vec2(steep*beachSteepness,0)).xyz,ALBEDO,clamp(height*(1.0/steep)*beachBlend,0.0,1.0));
+	//if (height > mountain_height && steep < mountainSteepness){
+		//ALBEDO = mix(mountainColor.xyz,ALBEDO,clamp((secretMountainBlendValue*steep/height)*mountainBlend,0.0,1.0));
+	//}
+	//vec3 bump = triplanarNormal(vert,nor,vec3(scale),vec2(0.0),noise_tex);
+	//vec3 DIFFUSE_LIGHT = col*max(dot(mix(nor,bump,smoothness),light_normal),0);
+	//DIFFUSE_LIGHT = vec3(max(dot(mix(nor,bump,smoothness),light_normal),0));
 }"

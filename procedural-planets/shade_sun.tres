@@ -5,11 +5,17 @@ code = "shader_type spatial;
 
 render_mode unshaded;
 
+uniform float angle = 0.0;
+
 uniform sampler2D atmos_grad;
+
+uniform float orbiting_speed = 0.02;
 
 varying vec3 cam_pos;
 
 uniform sampler2D noiseB;
+
+uniform float orbit_distance = 100000.0;
 
 uniform vec3 planet_pos = vec3(0.0,0.0,0.0);
 uniform float planet_radius = 600;
@@ -124,7 +130,9 @@ vec3 matMulltip(mat4 mat,vec3 vec){
 
 
 void fragment(){
-
+	vec3 p_pos = vec3(0,0,0);
+	p_pos.x = cos(angle) * orbit_distance;
+	p_pos.z = sin(angle) * orbit_distance;
 	ALPHA = 0.0;
 	float depth = texture(DEPTH_TEXTURE, SCREEN_UV).x;
 	vec3 ndc = vec3(SCREEN_UV, depth) * 2.0 - 1.0;
@@ -137,10 +145,10 @@ void fragment(){
 	vec4 view_ = INV_PROJECTION_MATRIX * vec4(vec3(SCREEN_UV, 0.0), 1.0);
 	vec3 viewNormal = normalize(cam*vec4(view.xyz,0)).xyz;
 	
-	vec2 hit_atmo = ray_sphere(planet_pos,planet_radius,cam_pos,cam*vec4(view.xyz,0));
+	vec2 hit_atmo = ray_sphere(p_pos,planet_radius,cam_pos,cam*vec4(view.xyz,0));
 
 	vec3 on_atmo_pos = cam_pos + viewNormal * hit_atmo.x;
-	vec3 atmo_surface_normal = normalize(on_atmo_pos - planet_pos);
+	vec3 atmo_surface_normal = normalize(on_atmo_pos - p_pos);
 	
 	if (hit_atmo.x > 0.0){
 		ALPHA = pow(hit_atmo.y*0.05,2)*0.00001;

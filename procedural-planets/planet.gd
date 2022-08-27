@@ -15,7 +15,7 @@ func _activate_physics( b ):
 
 func _ready():
 	generate()
-	update_material()
+	pass
 
 
 func _input(event):
